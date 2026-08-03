@@ -8,6 +8,10 @@ STOCK_STRATEGY = {
     "3008.TW": {"name": "大立光", "entry_price": 3875, "target_price": 4600},
     "2317.TW": {"name": "鴻海", "entry_price": 190, "target_price": 240},
     "2330.TW": {"name": "台積電", "entry_price": 930, "target_price": 1180},
+    "0050.TW": {"name": "元大台灣50", "entry_price": 180, "target_price": 220},
+    "0056.TW": {"name": "元大高股息", "entry_price": 36, "target_price": 42},
+    "00919.TW": {"name": "群益台灣精選高息", "entry_price": 23, "target_price": 27},
+    "00878.TW": {"name": "國泰永續高股息", "entry_price": 21, "target_price": 25},
 }
 
 
