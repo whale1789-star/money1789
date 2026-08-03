@@ -2,9 +2,11 @@ name: 自動更新股票均線通道數據
 
 on:
   schedule:
-    # 每天 UTC 09:30 執行（相當於台灣時間 17:30 股市收盤後）
-    - cron: '30 9 * * 1-5'
-  workflow_dispatch: # 支援手動觸發
+    # 台灣時間 09:00 到 13:30，每半小時執行一次 (UTC 01:00 ~ 05:30)
+    - cron: '0,30 1-5 * * 1-5'
+    # 台灣時間 14:00 收盤結算更新 (UTC 06:00)
+    - cron: '0 6 * * 1-5'
+  workflow_dispatch: # 支援在 GitHub 介面上手動點擊按鈕觸發執行
 
 permissions:
   contents: write
