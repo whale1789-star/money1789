@@ -21,10 +21,18 @@ def process_stock(ticker_symbol):
     )
 
     ticker = yf.Ticker(ticker_symbol)
-    df = ticker.history(period="60d")
+
+    # 🔑 關鍵修正：加入 auto_adjust=False 與 actions=False，抓取未經除息調整的「真實實體盤價」
+    df = ticker.history(period="60d", auto_adjust=False, actions=False)
 
     if df.empty or len(df) < 5:
-        df = yf.download(ticker_symbol, period="60d", progress=False)
+        df = yf.download(
+            ticker_symbol,
+            period="60d",
+            auto_adjust=False,
+            actions=False,
+            progress=False,
+        )
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
 
@@ -48,7 +56,7 @@ def process_stock(ticker_symbol):
 
 
 def main():
-    print("🚀 開始更新多股通道與戰略價格資料...")
+    print("🚀 開始更新多股通道與戰略價格資料 (真實盤價模式)...")
     results = {}
 
     for symbol in STOCK_STRATEGY.keys():
