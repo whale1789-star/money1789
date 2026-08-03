@@ -25,7 +25,7 @@ jobs:
 
       - name: 安裝依賴庫
         run: |
-          pip install --upgrade yfinance pandas requests
+          pip install --upgrade yfinance pandas requests lxml
 
       - name: 執行 Python 數據抓取與計算
         run: |
