@@ -4,17 +4,20 @@ on:
   schedule:
     # 每天 UTC 09:30 執行（相當於台灣時間 17:30 股市收盤後）
     - cron: '30 9 * * 1-5'
-  workflow_dispatch: # 支援在 GitHub 介面上手動按鈕觸發執行
+  workflow_dispatch: # 支援手動觸發
+
+permissions:
+  contents: write
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
     steps:
       - name: 檢出專案碼
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4 # 💡 升級為 v4
 
       - name: 設定 Python 環境
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5 # 💡 升級為 v5
         with:
           python-version: '3.10'
 
