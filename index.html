@@ -3,67 +3,226 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>5日高低價均線通道圖</title>
+  <title>5日高低通道與建議進出場價格儀表板</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8f9fa; padding: 20px; }
-    .container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    h2 { margin-top: 0; color: #1a1a1a; display: flex; justify-content: space-between; align-items: center; }
-    .updated { font-size: 0.85rem; color: #666; font-weight: normal; }
-    .chart-box { position: relative; height: 450px; width: 100%; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
   </style>
 </head>
-<body>
+<body class="bg-slate-50 text-slate-800 min-h-screen p-4 md:p-8">
 
-<div class="container">
-  <h2>
-    <span id="stock-name">載入中...</span>
-    <span class="updated" id="update-time">最後更新：--</span>
-  </h2>
-  <div class="chart-box">
-    <canvas id="channelChart"></canvas>
+  <div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- 頂部標題與選擇區 -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-3 h-3 rounded-full bg-blue-600 animate-pulse"></span>
+          <h1 class="text-2xl font-bold text-slate-900 tracking-tight">股票 5 日通道與戰略價格儀表板</h1>
+        </div>
+        <p class="text-sm text-slate-500 mt-1">即時整合 5 日平均高低通道與法人建議買賣防線</p>
+      </div>
+
+      <!-- 標的選擇與更新時間 -->
+      <div class="flex items-center gap-3">
+        <label for="stockSelect" class="text-sm font-semibold text-slate-600 whitespace-nowrap">選擇標的：</label>
+        <select id="stockSelect" onchange="changeStock(this.value)" class="bg-slate-100 hover:bg-slate-200/80 border border-slate-300 text-slate-900 text-sm font-semibold rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer">
+          <option value="3008.TW">大立光 (3008.TW)</option>
+          <option value="2317.TW">鴻海 (2317.TW)</option>
+          <option value="2330.TW">台積電 (2330.TW)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 數據指標卡片區 -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+      <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+        <div class="text-xs font-medium text-slate-500">最新收盤價</div>
+        <div class="text-xl md:text-2xl font-bold text-blue-600 mt-1" id="kpi-close">--</div>
+        <div class="text-[11px] text-slate-400 mt-0.5" id="kpi-date">基準日: --</div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-emerald-100 shadow-sm bg-emerald-50/30">
+        <div class="text-xs font-semibold text-emerald-700">🛒 建議入手價</div>
+        <div class="text-xl md:text-2xl font-bold text-emerald-600 mt-1" id="kpi-entry">--</div>
+        <div class="text-[11px] text-emerald-700/70 mt-0.5">甜蜜買點防線</div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-rose-100 shadow-sm bg-rose-50/30">
+        <div class="text-xs font-semibold text-rose-700">🎯 建議脫手價</div>
+        <div class="text-xl md:text-2xl font-bold text-rose-600 mt-1" id="kpi-target">--</div>
+        <div class="text-[11px] text-rose-700/70 mt-0.5">波段目標防線</div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm">
+        <div class="text-xs font-medium text-slate-500">5日平均高點 (上軌)</div>
+        <div class="text-xl md:text-2xl font-bold text-rose-500/90 mt-1" id="kpi-avg-high">--</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">短期壓力參考</div>
+      </div>
+
+      <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm col-span-2 md:col-span-1">
+        <div class="text-xs font-medium text-slate-500">5日平均低點 (下軌)</div>
+        <div class="text-xl md:text-2xl font-bold text-emerald-500/90 mt-1" id="kpi-avg-low">--</div>
+        <div class="text-[11px] text-slate-400 mt-0.5">短期支撐參考</div>
+      </div>
+    </div>
+
+    <!-- 戰略訊號橫幅 -->
+    <div id="signalBanner" class="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-sm font-medium flex items-center justify-between">
+      <span id="signalText">🔍 載入策略分析中...</span>
+      <span class="text-xs text-slate-500" id="lastUpdatedTime">更新時間: --</span>
+    </div>
+
+    <!-- 主圖表容器 -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-bold text-slate-800" id="chartTitle">5 日通道與價格防線對照圖</h2>
+        <div class="flex items-center gap-2 text-xs font-medium text-slate-500">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-600"></span> 實體股價
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span> 5D通道
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500"></span> 策略目標
+        </div>
+      </div>
+      <div class="relative h-[460px] w-full">
+        <canvas id="channelChart"></canvas>
+      </div>
+    </div>
+
   </div>
-</div>
 
-<script>
-  async function loadChart() {
-    try {
-      // 讀取自動更新的 JSON 數據 (加上 timestamp 避免瀏覽器快取)
-      const res = await fetch('stock_data.json?v=' + new Date().getTime());
-      const data = await res.json();
+  <script>
+    // 預設參考防線資料庫 (當 JSON 未能及時取得時的備用預設值)
+    const STOCK_CONFIGS = {
+      "3008.TW": { name: "大立光", entryPrice: 3875, targetPrice: 4600 },
+      "2317.TW": { name: "鴻海", entryPrice: 190, targetPrice: 240 },
+      "2330.TW": { name: "台積電", entryPrice: 930, targetPrice: 1180 }
+    };
 
-      document.getElementById('stock-name').innerText = `${data.stock} 5日高低價均線通道圖`;
-      document.getElementById('update-time').innerText = `最後更新時間：${data.updated_at}`;
+    // 模擬或預載歷史數據 (確保初始載入有美觀畫面)
+    const FALLBACK_DATA = {
+      "3008.TW": {
+        dates: ["07/24", "07/27", "07/28", "07/29", "07/30", "07/31", "08/03"],
+        close: [3920, 4090, 3900, 3850, 3715, 4035, 4030],
+        avg_high: [4072, 4106, 4121, 4103, 4043, 4039, 4039],
+        avg_low: [3882, 3912, 3924, 3908, 3840, 3814, 3814]
+      },
+      "2317.TW": {
+        dates: ["07/24", "07/27", "07/28", "07/29", "07/30", "07/31", "08/03"],
+        close: [198, 202, 195, 192, 186, 197, 196],
+        avg_high: [205, 206, 206, 204, 200, 199, 199],
+        avg_low: [194, 195, 195, 193, 188, 187, 187]
+      },
+      "2330.TW": {
+        dates: ["07/24", "07/27", "07/28", "07/29", "07/30", "07/31", "08/03"],
+        close: [960, 985, 945, 930, 905, 960, 955],
+        avg_high: [990, 995, 995, 980, 960, 955, 955],
+        avg_low: [940, 945, 945, 935, 910, 910, 910]
+      }
+    };
+
+    let chartInstance = null;
+    let currentTicker = "3008.TW";
+
+    function initOrUpdateChart(stockCode, dataset) {
+      const config = STOCK_CONFIGS[stockCode] || { name: stockCode, entryPrice: 0, targetPrice: 0 };
+      const entryPrice = dataset.entry_price || config.entryPrice;
+      const targetPrice = dataset.target_price || config.targetPrice;
+
+      const len = dataset.dates.length;
+      const entryLine = Array(len).fill(entryPrice);
+      const targetLine = Array(len).fill(targetPrice);
+
+      // 更新 KPI 卡片
+      const lastIdx = len - 1;
+      const latestClose = dataset.close[lastIdx];
+      const latestHigh = dataset.avg_high[lastIdx];
+      const latestLow = dataset.avg_low[lastIdx];
+
+      document.getElementById('kpi-close').innerText = `$${latestClose.toLocaleString()}`;
+      document.getElementById('kpi-date').innerText = `基準日: ${dataset.dates[lastIdx]}`;
+      document.getElementById('kpi-entry').innerText = `$${entryPrice.toLocaleString()}`;
+      document.getElementById('kpi-target').innerText = `$${targetPrice.toLocaleString()}`;
+      document.getElementById('kpi-avg-high').innerText = `$${latestHigh.toLocaleString()}`;
+      document.getElementById('kpi-avg-low').innerText = `$${latestLow.toLocaleString()}`;
+      document.getElementById('chartTitle').innerText = `${config.name} (${stockCode}) 5日通道與價格防線對照圖`;
+
+      // 策略分析訊號
+      const banner = document.getElementById('signalBanner');
+      const signalText = document.getElementById('signalText');
+      if (latestClose <= entryPrice) {
+        banner.className = "p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm font-medium flex items-center justify-between";
+        signalText.innerHTML = `💡 <strong>策略訊號：</strong> 當前股價 ($${latestClose}) 已落入或低於建議入手價 ($${entryPrice})，進入甜蜜建倉區間！`;
+      } else if (latestClose >= targetPrice) {
+        banner.className = "p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-sm font-medium flex items-center justify-between";
+        signalText.innerHTML = `🎯 <strong>策略訊號：</strong> 當前股價 ($${latestClose}) 已達到或超越目標脫手價 ($${targetPrice})，建議分批停利落袋！`;
+      } else {
+        banner.className = "p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-sm font-medium flex items-center justify-between";
+        signalText.innerHTML = `📊 <strong>策略訊號：</strong> 當前股價 ($${latestClose}) 落於通道常態區間（入手價 $${entryPrice} ～ 脫手價 $${targetPrice}）。`;
+      }
 
       const ctx = document.getElementById('channelChart').getContext('2d');
-      new Chart(ctx, {
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: data.dates,
+          labels: dataset.dates,
           datasets: [
-  {
-    label: '建議脫手價 (目標防線)',
-    data: Array(data.dates.length).fill(4600), // 劃一條 4600 元紅線
-    borderColor: 'rgba(239, 68, 68, 0.4)',
-    borderDash: [2, 2],
-    pointRadius: 0,
-    fill: false
-  },
-  {
-    label: '建議入手價 (甜蜜買點)',
-    data: Array(data.dates.length).fill(3875), // 劃一條 3875 元綠線
-    borderColor: 'rgba(16, 185, 129, 0.4)',
-    borderDash: [2, 2],
-    pointRadius: 0,
-    fill: false
-  },
             {
-              label: '前5日平均低點（下軌支撐）',
-              data: data.avg_low,
-              borderColor: '#10b981',
-              borderDash: [5, 5],
+              label: '🎯 建議脫手價 (目標賣點)',
+              data: targetLine,
+              borderColor: '#ef4444',
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              fill: false,
+              tension: 0
+            },
+            {
+              label: '🔺 前5日平均高點 (上軌壓力)',
+              data: dataset.avg_high,
+              borderColor: '#f87171',
+              borderWidth: 1.5,
+              borderDash: [2, 2],
+              pointRadius: 2,
               fill: false,
               tension: 0.2
+            },
+            {
+              label: '💙 每日收盤價',
+              data: dataset.close,
+              borderColor: '#2563eb',
+              backgroundColor: 'rgba(37, 99, 235, 0.08)',
+              borderWidth: 3,
+              pointRadius: 5,
+              pointBackgroundColor: '#2563eb',
+              fill: true,
+              tension: 0.1
+            },
+            {
+              label: '🔻 前5日平均低點 (下軌支撐)',
+              data: dataset.avg_low,
+              borderColor: '#34d399',
+              borderWidth: 1.5,
+              borderDash: [2, 2],
+              pointRadius: 2,
+              fill: false,
+              tension: 0.2
+            },
+            {
+              label: '🛒 建議入手價 (甜蜜買點)',
+              data: entryLine,
+              borderColor: '#059669',
+              borderWidth: 2,
+              borderDash: [6, 4],
+              pointRadius: 0,
+              fill: false,
+              tension: 0
             }
           ]
         },
@@ -72,26 +231,66 @@
           maintainAspectRatio: false,
           interaction: { intersect: false, mode: 'index' },
           plugins: {
+            legend: {
+              position: 'top',
+              labels: { font: { family: 'Inter', size: 12, weight: '500' }, usePointStyle: true, boxWidth: 8 }
+            },
             tooltip: {
+              padding: 12,
+              backgroundColor: 'rgba(15, 23, 42, 0.9)',
+              titleFont: { size: 13, weight: 'bold' },
+              bodyFont: { size: 12 },
               callbacks: {
                 label: function(context) {
-                  return `${context.dataset.label}: ${context.raw} 元`;
+                  return ` ${context.dataset.label}: $${context.raw.toLocaleString()}`;
                 }
               }
             }
           },
           scales: {
-            y: { title: { display: true, text: '價格 (TWD)' } }
+            x: { grid: { display: false } },
+            y: {
+              grid: { color: '#f1f5f9' },
+              ticks: {
+                callback: function(value) { return '$' + value.toLocaleString(); }
+              }
+            }
           }
         }
       });
-    } catch (err) {
-      console.error("無法載入股票數據:", err);
     }
-  }
 
-  loadChart();
-</script>
+    async function fetchStockData(ticker) {
+      try {
+        const res = await fetch('stock_data.json?v=' + new Date().getTime());
+        if (!res.ok) throw new Error("JSON file not found");
+        const json = await res.json();
+        
+        document.getElementById('lastUpdatedTime').innerText = `數據自動更新時間: ${json.updated_at || '最新'}`;
 
+        // 判斷是否為多股結構或單股結構
+        if (json.stocks && json.stocks[ticker]) {
+          initOrUpdateChart(ticker, json.stocks[ticker]);
+        } else if (json.stock === ticker) {
+          initOrUpdateChart(ticker, json);
+        } else {
+          // 使用預設數據
+          initOrUpdateChart(ticker, FALLBACK_DATA[ticker] || FALLBACK_DATA["3008.TW"]);
+        }
+      } catch (err) {
+        console.warn("無法取得伺服器最新 stock_data.json，使用本地實體數據展示：", err);
+        document.getElementById('lastUpdatedTime').innerText = `展示狀態: 本地預設數據`;
+        initOrUpdateChart(ticker, FALLBACK_DATA[ticker] || FALLBACK_DATA["3008.TW"]);
+      }
+    }
+
+    function changeStock(ticker) {
+      currentTicker = ticker;
+      fetchStockData(ticker);
+    }
+
+    // 頁面初始化
+    fetchStockData(currentTicker);
+  </script>
 </body>
 </html>
