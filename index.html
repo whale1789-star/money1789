@@ -41,23 +41,22 @@
         data: {
           labels: data.dates,
           datasets: [
-            {
-              label: '前5日平均高點（上軌壓力）',
-              data: data.avg_high,
-              borderColor: '#ef4444',
-              borderDash: [5, 5],
-              fill: false,
-              tension: 0.2
-            },
-            {
-              label: '收盤價',
-              data: data.close,
-              borderColor: '#2563eb',
-              backgroundColor: '#2563eb',
-              borderWidth: 2.5,
-              pointRadius: 4,
-              tension: 0.1
-            },
+  {
+    label: '建議脫手價 (目標防線)',
+    data: Array(data.dates.length).fill(4600), // 劃一條 4600 元紅線
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    borderDash: [2, 2],
+    pointRadius: 0,
+    fill: false
+  },
+  {
+    label: '建議入手價 (甜蜜買點)',
+    data: Array(data.dates.length).fill(3875), // 劃一條 3875 元綠線
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+    borderDash: [2, 2],
+    pointRadius: 0,
+    fill: false
+  },
             {
               label: '前5日平均低點（下軌支撐）',
               data: data.avg_low,
