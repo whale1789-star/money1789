@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>5日高低價均線通道圖</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8f9fa; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    h2 { margin-top: 0; color: #1a1a1a; display: flex; justify-content: space-between; align-items: center; }
+    .updated { font-size: 0.85rem; color: #666; font-weight: normal; }
+    .chart-box { position: relative; height: 450px; width: 100%; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>
+    <span id="stock-name">載入中...</span>
+    <span class="updated" id="update-time">最後更新：--</span>
+  </h2>
+  <div class="chart-box">
+    <canvas id="channelChart"></canvas>
+  </div>
+</div>
+
+<script>
+  async function loadChart() {
+    try {
+      // 讀取自動更新的 JSON 數據 (加上 timestamp 避免瀏覽器快取)
+      const res = await fetch('stock_data.json?v=' + new Date().getTime());
+      const data = await res.json();
+
+      document.getElementById('stock-name').innerText = `${data.stock} 5日高低價均線通道圖`;
+      document.getElementById('update-time').innerText = `最後更新時間：${data.updated_at}`;
+
+      const ctx = document.getElementById('channelChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.dates,
+          datasets: [
+            {
+              label: '前5日平均高點（上軌壓力）',
+              data: data.avg_high,
+              borderColor: '#ef4444',
+              borderDash: [5, 5],
+              fill: false,
+              tension: 0.2
+            },
+            {
+              label: '收盤價',
+              data: data.close,
+              borderColor: '#2563eb',
+              backgroundColor: '#2563eb',
+              borderWidth: 2.5,
+              pointRadius: 4,
+              tension: 0.1
+            },
+            {
+              label: '前5日平均低點（下軌支撐）',
+              data: data.avg_low,
+              borderColor: '#10b981',
+              borderDash: [5, 5],
+              fill: false,
+              tension: 0.2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `${context.dataset.label}: ${context.raw} 元`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: { title: { display: true, text: '價格 (TWD)' } }
+          }
+        }
+      });
+    } catch (err) {
+      console.error("無法載入股票數據:", err);
+    }
+  }
+
+  loadChart();
+</script>
+
+</body>
+</html>
