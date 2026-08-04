@@ -3,7 +3,6 @@ import sys
 import pandas as pd
 import yfinance as yf
 
-# 追蹤標的清單 (價格改為由程式每日自動動態計算)
 STOCKS = {
     "3008.TW": "大立光",
     "2317.TW": "鴻海",
@@ -18,7 +17,6 @@ STOCKS = {
 def process_stock(ticker_symbol):
     df = pd.DataFrame()
 
-    # 嘗試抓取 60 日 K 線數據
     try:
         ticker = yf.Ticker(ticker_symbol)
         df = ticker.history(period="60d", auto_adjust=False)
@@ -47,17 +45,15 @@ def process_stock(ticker_symbol):
     df["MA20"] = df["Close"].rolling(window=20).mean()
     df["STD20"] = df["Close"].rolling(window=20).std()
 
-    # 最新一日的動態入手價與脫手價
     latest_ma = df["MA20"].iloc[-1]
     latest_std = df["STD20"].iloc[-1]
 
-    # 高價股保留個位數小數，ETF保留兩位小數
-    digits = 2 if "00" in ticker_symbol else 0
-    dynamic_entry = round(latest_ma - 1.5 * latest_std, digits)
-    dynamic_target = round(latest_ma + 1.5 * latest_std, digits)
+    # 個股保留整數，ETF保留兩位小數
+    digits = 2 if ticker_symbol.startswith("00") else 0
+    dynamic_entry = round(float(latest_ma - 1.5 * latest_std), digits)
+    dynamic_target = round(float(latest_ma + 1.5 * latest_std), digits)
 
-    # 擷取最近 30 筆資料供前端繪圖
-    df_clean = df.dropna(subset=["5D_Avg_High", "5D_Avg_Low"]).tail(30)
+    df_clean = df.dropna(subset=["5D_Avg_High", "5D_Avg_Low", "MA20"]).tail(30)
 
     return {
         "name": STOCKS.get(ticker_symbol, ticker_symbol),
@@ -80,7 +76,7 @@ def main():
         if data:
             results[symbol] = data
             print(
-                f"✅ {data['name']} ({symbol}) -> 動態入手價: {data['entry_price']}, 動態脫手價: {data['target_price']}"
+                f"✅ {data['name']} ({symbol}) -> 最新價: {data['close'][-1]}, 動態入手價: {data['entry_price']}, 動態脫手價: {data['target_price']}"
             )
 
     if not results:
