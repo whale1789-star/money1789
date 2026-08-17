@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>動態 5 日通道與交易決策儀表板</title>
+    <title>小布交易決策儀表板</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -11,90 +11,170 @@
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-8">
 
-    <div class="max-w-4xl mx-auto bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-700">
-        <!-- 頂部標題與選單 -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-700 pb-6 mb-6">
-            <div>
-                <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-300">
-                    小布📈 動態 5 日通道監控
-                </h1>
-                <p id="updated-time" class="text-xs text-gray-400 mt-1">更新時間：載入中...</p>
+    <div class="max-w-5xl mx-auto space-y-6">
+        
+        <!-- 頂部主卡片 -->
+        <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-700">
+            <!-- 標題與選單 -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-700 pb-6 mb-6">
+                <div>
+                    <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-300">
+                        小布交易決策儀表板
+                    </h1>
+                    <p id="updated-time" class="text-xs text-gray-400 mt-1">更新時間：載入中...</p>
+                </div>
+                <div>
+                    <label for="stock-select" class="block text-xs text-gray-400 mb-1">選擇監控標的：</label>
+                    <select id="stock-select" class="bg-gray-700 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600">
+                        <optgroup label="核心權值">
+                            <option value="2330.TW" selected>台積電 (2330)</option>
+                            <option value="3008.TW">大立光 (3008)</option>
+                            <option value="2317.TW">鴻海 (2317)</option>
+                        </optgroup>
+                        <optgroup label="記憶體 / PCB / 電子零組件">
+                            <option value="2408.TW">南亞科 (2408)</option>
+                            <option value="2337.TW">旺宏 (2337)</option>
+                            <option value="6770.TW">力積電 (6770)</option>
+                            <option value="8358.TWO">金居 (8358)</option>
+                            <option value="6213.TW">聯茂 (6213)</option>
+                            <option value="6290.TWO">良維 (6290)</option>
+                        </optgroup>
+                        <optgroup label="高股息 & 指數 ETF">
+                            <option value="0050.TW">元大台灣50 (0050)</option>
+                            <option value="0056.TW">元大高股息 (0056)</option>
+                            <option value="00919.TW">群益台灣精選高息 (00919)</option>
+                            <option value="00878.TW">國泰永續高股息 (00878)</option>
+                        </optgroup>
+                    </select>
+                </div>
             </div>
-            <div>
-                <label for="stock-select" class="block text-xs text-gray-400 mb-1">選擇監控標的：</label>
-                <select id="stock-select" class="bg-gray-700 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 border border-gray-600">
-                    <optgroup label="核心權值">
-                        <option value="2330.TW" selected>台積電 (2330)</option>
-                        <option value="3008.TW">大立光 (3008)</option>
-                        <option value="2317.TW">鴻海 (2317)</option>
-                    </optgroup>
-                    <optgroup label="記憶體 / PCB / 電子零組件 (新增)">
-                        <option value="2408.TW">南亞科 (2408)</option>
-                        <option value="2337.TW">旺宏 (2337)</option>
-                        <option value="6770.TW">力積電 (6770)</option>
-                        <option value="8358.TWO">金居 (8358)</option>
-                        <option value="6213.TW">聯茂 (6213)</option>
-                        <option value="6290.TWO">良維 (6290)</option>
-                    </optgroup>
-                    <optgroup label="高股息 & 指數 ETF">
-                        <option value="0050.TW">元大台灣50 (0050)</option>
-                        <option value="0056.TW">元大高股息 (0056)</option>
-                        <option value="00919.TW">群益台灣精選高息 (00919)</option>
-                        <option value="00878.TW">國泰永續高股息 (00878)</option>
-                    </optgroup>
-                </select>
+
+            <!-- 核心指標卡片群 -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <!-- 現價卡片 -->
+                <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
+                    <span class="text-xs text-gray-400 block mb-1">最新收盤 / 盤價</span>
+                    <div class="flex items-baseline gap-1">
+                        <span id="card-price" class="text-2xl md:text-3xl font-bold text-white">--</span>
+                        <span class="text-xs text-gray-400">TWD</span>
+                    </div>
+                    <div id="card-status" class="mt-2 text-xs font-semibold px-2 py-0.5 rounded-full inline-block bg-blue-900 text-blue-300">
+                        載入中...
+                    </div>
+                </div>
+
+                <!-- 動態入手價 (甜蜜點) -->
+                <div class="bg-emerald-950/30 p-4 rounded-xl border border-emerald-800/50">
+                    <span class="text-xs text-emerald-400 block mb-1">🛒 動態入手價 (甜蜜點)</span>
+                    <div class="flex items-baseline gap-1">
+                        <span id="card-buy" class="text-2xl md:text-3xl font-bold text-emerald-400">--</span>
+                        <span class="text-xs text-gray-400">TWD</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-2">MA20 - 1.5SD / 逢回分批</p>
+                </div>
+
+                <!-- 動態脫手價 -->
+                <div class="bg-rose-950/30 p-4 rounded-xl border border-rose-800/50">
+                    <span class="text-xs text-rose-400 block mb-1">🎯 動態脫手價 (目標價)</span>
+                    <div class="flex items-baseline gap-1">
+                        <span id="card-sell" class="text-2xl md:text-3xl font-bold text-rose-400">--</span>
+                        <span class="text-xs text-gray-400">TWD</span>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mt-2">MA20 + 1.5SD / 分批停利</p>
+                </div>
+
+                <!-- 歷史高低區間 (52週) -->
+                <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
+                    <span class="text-xs text-gray-400 block mb-1">📅 52週歷史高低區間</span>
+                    <div class="mt-1 space-y-1 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-xs text-rose-400">最高：</span>
+                            <span id="card-52high" class="font-semibold text-white">--</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-xs text-emerald-400">最低：</span>
+                            <span id="card-52low" class="font-semibold text-white">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 圖表區域 -->
+            <div class="bg-gray-700/30 p-4 md:p-6 rounded-xl border border-gray-700">
+                <h2 class="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                    <span>📊</span> 5 日股價動態走勢與通道位階
+                </h2>
+                <div class="relative h-64 md:h-80 w-full">
+                    <canvas id="stockChart"></canvas>
+                </div>
             </div>
         </div>
 
-        <!-- 核心指標卡片 -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <!-- 現價卡片 -->
-            <div class="bg-gray-700/50 p-5 rounded-xl border border-gray-600">
-                <span class="text-xs text-gray-400 block mb-1">最新收盤 / 盤價</span>
-                <div class="flex items-baseline gap-2">
-                    <span id="card-price" class="text-3xl font-bold text-white">--</span>
-                    <span class="text-xs text-gray-400">TWD</span>
-                </div>
-                <div id="card-status" class="mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-blue-900 text-blue-300">
-                    載入中...
+        <!-- 交易計算機與持股筆記區塊 (先前功能) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- 交易試算機 -->
+            <div class="bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-700">
+                <h3 class="text-lg font-bold text-teal-400 mb-4 flex items-center gap-2">
+                    <span>🧮</span> 交易與獲利試算機
+                </h3>
+                <div class="space-y-4 text-sm">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">買入價格 (TWD)</label>
+                            <input type="number" id="calc-buy-price" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500" placeholder="例如：2300">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">預計賣出價 (TWD)</label>
+                            <input type="number" id="calc-sell-price" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500" placeholder="例如：2500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">買入股數 (張數 × 1000)</label>
+                        <input type="number" id="calc-shares" value="1000" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500">
+                    </div>
+                    <div class="bg-gray-900/60 p-4 rounded-xl space-y-2 border border-gray-700">
+                        <div class="flex justify-between text-xs text-gray-400">
+                            <span>預估投資本金：</span>
+                            <span id="res-principal" class="text-white font-medium">-- 元</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-400">
+                            <span>預估獲利金額：</span>
+                            <span id="res-profit" class="font-bold text-white">-- 元</span>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-400">
+                            <span>預期報酬率 (ROI)：</span>
+                            <span id="res-roi" class="font-bold text-white">-- %</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- 動態入手價 -->
-            <div class="bg-emerald-950/30 p-5 rounded-xl border border-emerald-800/50">
-                <span class="text-xs text-emerald-400 block mb-1">🛒 動態入手價 (MA20 - 1.5SD)</span>
-                <div class="flex items-baseline gap-2">
-                    <span id="card-buy" class="text-3xl font-bold text-emerald-400">--</span>
-                    <span class="text-xs text-gray-400">TWD</span>
+            <!-- 個人持股筆記本 (本機自動儲存) -->
+            <div class="bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-700 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-blue-400 mb-4 flex items-center gap-2">
+                        <span>📝</span> 個人標的觀察筆記
+                    </h3>
+                    <p class="text-xs text-gray-400 mb-2">紀錄針對當前股票的策略或進出場想法（自動儲存於瀏覽器）：</p>
+                    <textarea id="stock-note" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 text-sm" placeholder="輸入個人筆記，例如：跌破 2250 逢低分批加碼 1 張..."></textarea>
                 </div>
-                <p class="text-[11px] text-gray-400 mt-2">支撐防線 / 逢回分批佈局點</p>
+                <div class="mt-3 flex justify-between items-center">
+                    <span id="note-saved-msg" class="text-xs text-emerald-400 opacity-0 transition-opacity">已自動儲存筆記！</span>
+                    <button id="save-note-btn" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2 px-4 rounded-lg transition-colors">
+                        儲存筆記
+                    </button>
+                </div>
             </div>
 
-            <!-- 動態脫手價 -->
-            <div class="bg-rose-950/30 p-5 rounded-xl border border-rose-800/50">
-                <span class="text-xs text-rose-400 block mb-1">🎯 動態脫手價 (MA20 + 1.5SD)</span>
-                <div class="flex items-baseline gap-2">
-                    <span id="card-sell" class="text-3xl font-bold text-rose-400">--</span>
-                    <span class="text-xs text-gray-400">TWD</span>
-                </div>
-                <p class="text-[11px] text-gray-400 mt-2">波段獲利了結 / 超買減碼防線</p>
-            </div>
         </div>
 
-        <!-- 圖表區域 -->
-        <div class="bg-gray-700/30 p-4 md:p-6 rounded-xl border border-gray-700">
-            <h2 class="text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
-                <span>📊</span> 5 日股價動態走勢與通道位階
-            </h2>
-            <div class="relative h-64 md:h-80 w-full">
-                <canvas id="stockChart"></canvas>
-            </div>
-        </div>
     </div>
 
     <script>
         let chartInstance = null;
         let stockDatabase = {};
+        let currentTicker = '2330.TW';
 
         async function loadStockData() {
             try {
@@ -108,27 +188,39 @@
                 const select = document.getElementById('stock-select');
                 renderStockView(select.value);
             } catch (err) {
-                console.warn('正在等待伺服器資料生成...', err);
-                document.getElementById('updated-time').innerText = '正在等待伺服器排程生成最新數據...';
+                console.warn('等待伺服器資料中...', err);
+                document.getElementById('updated-time').innerText = '等待伺服器排程生成最新數據...';
             }
         }
 
         function renderStockView(ticker) {
+            currentTicker = ticker;
             const stock = stockDatabase[ticker];
             if (!stock) return;
 
             document.getElementById('card-price').innerText = stock.current_price;
             document.getElementById('card-buy').innerText = stock.buy_price;
             document.getElementById('card-sell').innerText = stock.sell_price;
+            document.getElementById('card-52high').innerText = stock.high_52w + ' 元';
+            document.getElementById('card-52low').innerText = stock.low_52w + ' 元';
             
+            // 預先填入試算機買進/賣出價
+            document.getElementById('calc-buy-price').value = stock.buy_price;
+            document.getElementById('calc-sell-price').value = stock.sell_price;
+            calculateProfit();
+
+            // 讀取該股票的個人筆記
+            const savedNote = localStorage.getItem('note_' + ticker) || '';
+            document.getElementById('stock-note').value = savedNote;
+
             const statusEl = document.getElementById('card-status');
             statusEl.innerText = stock.status;
             if (stock.status_color === 'red') {
-                statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-rose-900 text-rose-200';
+                statusEl.className = 'mt-2 text-xs font-semibold px-2 py-0.5 rounded-full inline-block bg-rose-900 text-rose-200';
             } else if (stock.status_color === 'green') {
-                statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-emerald-900 text-emerald-200';
+                statusEl.className = 'mt-2 text-xs font-semibold px-2 py-0.5 rounded-full inline-block bg-emerald-900 text-emerald-200';
             } else {
-                statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-blue-900 text-blue-200';
+                statusEl.className = 'mt-2 text-xs font-semibold px-2 py-0.5 rounded-full inline-block bg-blue-900 text-blue-200';
             }
 
             renderChart(stock);
@@ -150,7 +242,7 @@
                     labels: stock.chart_labels,
                     datasets: [
                         {
-                            label: '實際盤價',
+                            label: '實際走勢',
                             data: stock.chart_prices,
                             borderColor: '#38bdf8',
                             backgroundColor: 'rgba(56, 189, 248, 0.15)',
@@ -161,7 +253,7 @@
                             pointBackgroundColor: '#38bdf8'
                         },
                         {
-                            label: '動態脫手價',
+                            label: '動態脫手價 (目標)',
                             data: sellLine,
                             borderColor: '#f43f5e',
                             borderWidth: 2,
@@ -170,7 +262,7 @@
                             fill: false
                         },
                         {
-                            label: '動態入手價',
+                            label: '動態入手價 (甜蜜點)',
                             data: buyLine,
                             borderColor: '#10b981',
                             borderWidth: 2,
@@ -184,29 +276,54 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af' }
-                        },
-                        y: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af' }
-                        }
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af' } },
+                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#9ca3af' } }
                     },
                     plugins: {
-                        legend: {
-                            labels: { color: '#e5e7eb', font: { size: 12 } }
-                        }
+                        legend: { labels: { color: '#e5e7eb', font: { size: 12 } } }
                     }
                 }
             });
         }
 
+        // 試算機計算邏輯
+        function calculateProfit() {
+            const buy = parseFloat(document.getElementById('calc-buy-price').value) || 0;
+            const sell = parseFloat(document.getElementById('calc-sell-price').value) || 0;
+            const shares = parseFloat(document.getElementById('calc-shares').value) || 0;
+
+            const principal = buy * shares;
+            const profit = (sell - buy) * shares;
+            const roi = principal > 0 ? ((profit / principal) * 100).toFixed(2) : 0;
+
+            document.getElementById('res-principal').innerText = principal.toLocaleString() + ' 元';
+            const profitEl = document.getElementById('res-profit');
+            profitEl.innerText = (profit >= 0 ? '+' : '') + profit.toLocaleString() + ' 元';
+            profitEl.className = 'font-bold ' + (profit >= 0 ? 'text-rose-400' : 'text-emerald-400');
+
+            const roiEl = document.getElementById('res-roi');
+            roiEl.innerText = (roi >= 0 ? '+' : '') + roi + ' %';
+            roiEl.className = 'font-bold ' + (roi >= 0 ? 'text-rose-400' : 'text-emerald-400');
+        }
+
+        // 監聽選單與計算機輸入
         document.getElementById('stock-select').addEventListener('change', (e) => {
             renderStockView(e.target.value);
         });
+        document.getElementById('calc-buy-price').addEventListener('input', calculateProfit);
+        document.getElementById('calc-sell-price').addEventListener('input', calculateProfit);
+        document.getElementById('calc-shares').addEventListener('input', calculateProfit);
 
-        // 頁面初次載入
+        // 筆記儲存
+        document.getElementById('save-note-btn').addEventListener('click', () => {
+            const noteText = document.getElementById('stock-note').value;
+            localStorage.setItem('note_' + currentTicker, noteText);
+            const msg = document.getElementById('note-saved-msg');
+            msg.style.opacity = '1';
+            setTimeout(() => { msg.style.opacity = '0'; }, 2000);
+        });
+
+        // 初始載入
         loadStockData();
     </script>
 </body>
