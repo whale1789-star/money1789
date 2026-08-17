@@ -5,7 +5,7 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime
 
-# 13 檔監控標的清單（涵蓋原 7 檔 + 新增 6 檔，包含上市 .TW 與上櫃 .TWO）
+# 13 檔標的清單（涵蓋上市 .TW 與上櫃 .TWO）
 STOCK_STRATEGY = {
     "2330.TW": {"name": "台積電", "category": "核心權值"},
     "3008.TW": {"name": "大立光", "category": "核心權值"},
@@ -35,36 +35,42 @@ def fetch_and_calculate():
         
         try:
             stock = yf.Ticker(ticker)
-            # 抓取最近 1 年歷史資料以計算 52 週高低價與 20 日通道
+            # 抓取 1 年歷史資料以計算 52 週高低價與 20 日滾動通道
             df = stock.history(period="1y")
             
-            if df.empty or len(df) < 20:
-                print(f"⚠️ {ticker} 歷史資料不足 20 日，跳過。")
+            if df.empty or len(df) < 25:
+                print(f"⚠️ {ticker} 歷史資料不足，跳過。")
                 continue
 
-            # 52 週（1年）歷史高低點
+            # 52 週歷史高低點
             high_52w = round(float(df['High'].max()), 2)
             low_52w = round(float(df['Low'].min()), 2)
 
-            # 計算 20 日月線 (MA20) 與 20 日標準差 (Std20)
+            # 滾動計算 20 日月線 (MA20) 與標準差 (STD20)
             df['MA20'] = df['Close'].rolling(window=20).mean()
-            df['STD20'] = df['Close'].rolling(window=20).std()
+            df['STD20'] = df['Close'].rolling(window=20).std().fillna(0)
             
-            latest_row = df.iloc[-1]
-            current_price = round(float(latest_row['Close']), 2)
-            ma20 = float(latest_row['MA20'])
-            std20 = float(latest_row['STD20']) if not pd.isna(latest_row['STD20']) else 0.0
-            
-            # 動態入手價 / 脫手價
-            spread = max(std20 * 1.5, current_price * 0.03)
-            dynamic_buy = round(ma20 - spread, 2)
-            dynamic_sell = round(ma20 + spread, 2)
-            
-            # 取最近 5 筆交易日做走勢圖
+            # 動態河流上下軌：MA20 ± 1.5 倍標準差 (最低保留 3% 寬度防線)
+            df['Spread'] = np.maximum(df['STD20'] * 1.5, df['Close'] * 0.03)
+            df['Upper_Band'] = (df['MA20'] + df['Spread']).round(2)
+            df['Lower_Band'] = (df['MA20'] - df['Spread']).round(2)
+            df['MA20'] = df['MA20'].round(2)
+
+            # 取最近 5 個交易日做「5日動態河流數據」
             last_5 = df.tail(5)
             labels = [idx.strftime("%m/%d") for idx in last_5.index]
             prices = [round(float(p), 2) for p in last_5['Close']]
-            
+            river_upper = [float(u) for u in last_5['Upper_Band']]
+            river_ma = [float(m) for m in last_5['MA20']]
+            river_lower = [float(l) for l in last_5['Lower_Band']]
+
+            # 最新一日數據
+            latest_row = df.iloc[-1]
+            current_price = round(float(latest_row['Close']), 2)
+            dynamic_buy = float(latest_row['Lower_Band'])
+            dynamic_sell = float(latest_row['Upper_Band'])
+            ma20 = float(latest_row['MA20'])
+
             # 狀態判定
             if current_price >= dynamic_sell:
                 status = "高檔警戒 (達到脫手區)"
@@ -73,14 +79,14 @@ def fetch_and_calculate():
                 status = "甜蜜買點 (超跌可分批)"
                 status_color = "green"
             else:
-                status = "通道震盪 (觀望持有)"
+                status = "河流震盪 (常態持有)"
                 status_color = "blue"
 
             output_data["stocks"][ticker] = {
                 "name": name,
                 "category": category,
                 "current_price": current_price,
-                "ma20": round(ma20, 2),
+                "ma20": ma20,
                 "buy_price": dynamic_buy,
                 "sell_price": dynamic_sell,
                 "high_52w": high_52w,
@@ -88,17 +94,20 @@ def fetch_and_calculate():
                 "status": status,
                 "status_color": status_color,
                 "chart_labels": labels,
-                "chart_prices": prices
+                "chart_prices": prices,
+                "river_upper": river_upper,
+                "river_ma": river_ma,
+                "river_lower": river_lower
             }
-            print(f"✅ {name} 完成：現價 {current_price} | 入手價 {dynamic_buy} | 脫手價 {dynamic_sell} | 52W高 {high_52w}")
+            print(f"✅ {name} 完成：現價 {current_price} | 動態河流下軌 {dynamic_buy} | 上軌 {dynamic_sell}")
             
         except Exception as e:
             print(f"❌ 抓取 {ticker} 失敗: {e}")
 
-    # 輸出為 JSON
+    # 輸出至 JSON
     with open("stock_data.json", "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
-    print("\n🎉 全數更新完成，已成功寫入 stock_data.json！")
+    print("\n🎉 5日動態河流數據計算完成，已寫入 stock_data.json！")
 
 if __name__ == "__main__":
     fetch_and_calculate()
