@@ -1,98 +1,98 @@
+import os
 import json
-import sys
+import numpy as np
 import pandas as pd
 import yfinance as yf
+from datetime import datetime
 
-STOCKS = {
-    "3008.TW": "大立光",
-    "2317.TW": "鴻海",
-    "2330.TW": "台積電",
-    "0050.TW": "元大台灣50",
-    "0056.TW": "元大高股息",
-    "00919.TW": "群益台灣精選高息",
-    "00878.TW": "國泰永續高股息",
+# 追蹤標的清單（涵蓋原 7 檔 + 新增 6 檔，包含上市 .TW 與上櫃 .TWO）
+STOCK_STRATEGY = {
+    "2330.TW": {"name": "台積電"},
+    "3008.TW": {"name": "大立光"},
+    "2317.TW": {"name": "鴻海"},
+    "0050.TW": {"name": "元大台灣50"},
+    "0056.TW": {"name": "元大高股息"},
+    "00919.TW": {"name": "群益台灣精選高息"},
+    "00878.TW": {"name": "國泰永續高股息"},
+    # ➕ 新增 6 檔標的
+    "2408.TW": {"name": "南亞科"},
+    "2337.TW": {"name": "旺宏"},
+    "6770.TW": {"name": "力積電"},
+    "8358.TWO": {"name": "金居"},
+    "6213.TW": {"name": "聯茂"},
+    "6290.TWO": {"name": "良維"},
 }
 
+def fetch_and_calculate():
+    output_data = {
+        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "stocks": {}
+    }
 
-def process_stock(ticker_symbol):
-    df = pd.DataFrame()
-
-    try:
-        ticker = yf.Ticker(ticker_symbol)
-        df = ticker.history(period="60d", auto_adjust=False)
-    except Exception as e:
-        print(f"⚠️ {ticker_symbol} Ticker fetch failed: {e}")
-
-    if df.empty or "Close" not in df.columns or len(df) < 20:
+    for ticker, meta in STOCK_STRATEGY.items():
+        name = meta["name"]
+        print(f"正在抓取 {name} ({ticker}) 的數據...")
+        
         try:
-            df = yf.download(
-                ticker_symbol, period="60d", auto_adjust=False, progress=False
-            )
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.get_level_values(0)
+            stock = yf.Ticker(ticker)
+            # 抓取最近 60 天歷史資料以計算 20 日均線與標準差
+            df = stock.history(period="60d")
+            
+            if df.empty or len(df) < 20:
+                print(f"⚠️ {ticker} 歷史資料不足 20 日，跳過計算。")
+                continue
+
+            # 計算 20 日月線 (MA20) 與 20 日標準差 (Std20)
+            df['MA20'] = df['Close'].rolling(window=20).mean()
+            df['STD20'] = df['Close'].rolling(window=20).std()
+            
+            # 動態通道：以最新盤價之 MA20 ± 1.5 倍標準差作為動態入手價/脫手價
+            latest_row = df.iloc[-1]
+            current_price = round(float(latest_row['Close']), 2)
+            ma20 = float(latest_row['MA20'])
+            std20 = float(latest_row['STD20']) if not pd.isna(latest_row['STD20']) else 0.0
+            
+            # 動態推算（若波動太小則保留至少 3% 的通道區間）
+            spread = max(std20 * 1.5, current_price * 0.03)
+            dynamic_buy = round(ma20 - spread, 2)
+            dynamic_sell = round(ma20 + spread, 2)
+            
+            # 取最近 5 筆交易日做 5 日走勢圖
+            last_5 = df.tail(5)
+            labels = [idx.strftime("%m/%d") for idx in last_5.index]
+            prices = [round(float(p), 2) for p in last_5['Close']]
+            
+            # 判斷目前價格狀態 (區間高檔 / 甜蜜區間 / 破底超跌)
+            if current_price >= dynamic_sell:
+                status = "高檔警戒 (達到脫手區)"
+                status_color = "red"
+            elif current_price <= dynamic_buy:
+                status = "甜蜜買點 (超跌可分批)"
+                status_color = "green"
+            else:
+                status = "通道震盪 (觀望持有)"
+                status_color = "blue"
+
+            output_data["stocks"][ticker] = {
+                "name": name,
+                "current_price": current_price,
+                "ma20": round(ma20, 2),
+                "buy_price": dynamic_buy,
+                "sell_price": dynamic_sell,
+                "status": status,
+                "status_color": status_color,
+                "chart_labels": labels,
+                "chart_prices": prices
+            }
+            print(f"✅ {name} 計算完成：現價 {current_price}, 入手價 {dynamic_buy}, 脫手價 {dynamic_sell}")
+            
         except Exception as e:
-            print(f"⚠️ {ticker_symbol} Download failed: {e}")
+            print(f"❌ 抓取 {ticker} 失敗: {e}")
 
-    if df.empty or "Close" not in df.columns or len(df) < 20:
-        print(f"❌ {ticker_symbol} 資料不足 20 日，無法計算動態戰略價。")
-        return None
-
-    # 1. 計算 5 日平均高點與低點 (5D 通道)
-    df["5D_Avg_High"] = df["High"].rolling(window=5).mean()
-    df["5D_Avg_Low"] = df["Low"].rolling(window=5).mean()
-
-    # 2. 動態計算戰略價格 (使用 20日均線 MA20 ± 1.5倍標準差)
-    df["MA20"] = df["Close"].rolling(window=20).mean()
-    df["STD20"] = df["Close"].rolling(window=20).std()
-
-    latest_ma = df["MA20"].iloc[-1]
-    latest_std = df["STD20"].iloc[-1]
-
-    # 個股保留整數，ETF保留兩位小數
-    digits = 2 if ticker_symbol.startswith("00") else 0
-    dynamic_entry = round(float(latest_ma - 1.5 * latest_std), digits)
-    dynamic_target = round(float(latest_ma + 1.5 * latest_std), digits)
-
-    df_clean = df.dropna(subset=["5D_Avg_High", "5D_Avg_Low", "MA20"]).tail(30)
-
-    return {
-        "name": STOCKS.get(ticker_symbol, ticker_symbol),
-        "dates": df_clean.index.strftime("%m/%d").tolist(),
-        "close": [round(float(x), digits) for x in df_clean["Close"]],
-        "avg_high": [round(float(x), digits) for x in df_clean["5D_Avg_High"]],
-        "avg_low": [round(float(x), digits) for x in df_clean["5D_Avg_Low"]],
-        "entry_price": dynamic_entry,
-        "target_price": dynamic_target,
-    }
-
-
-def main():
-    print("🚀 開始動態計算各標的之 5D 通道與戰略價格...")
-    results = {}
-
-    for symbol in STOCKS.keys():
-        print(f"正在分析與計算: {symbol}...")
-        data = process_stock(symbol)
-        if data:
-            results[symbol] = data
-            print(
-                f"✅ {data['name']} ({symbol}) -> 最新價: {data['close'][-1]}, 動態入手價: {data['entry_price']}, 動態脫手價: {data['target_price']}"
-            )
-
-    if not results:
-        print("❌ 錯誤: 所有股票資料皆無法順利讀取！")
-        sys.exit(1)
-
-    output_payload = {
-        "updated_at": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "stocks": results,
-    }
-
+    # 輸出為 JSON 檔
     with open("stock_data.json", "w", encoding="utf-8") as f:
-        json.dump(output_payload, f, ensure_ascii=False, indent=2)
-
-    print("🎉 stock_data.json 全數動態計算並更新完畢！")
-
+        json.dump(output_data, f, ensure_ascii=False, indent=2)
+    print("\n🎉 所有標的更新完成，已寫入 stock_data.json！")
 
 if __name__ == "__main__":
-    main()
+    fetch_and_calculate()
