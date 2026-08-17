@@ -1,12 +1,15 @@
 {
-  "updated_at": "2026-08-17 01:34:36",
+  "updated_at": "2026-08-17 01:44:02",
   "stocks": {
     "2330.TW": {
       "name": "台積電",
-      "current_price": 2400.0,
-      "ma20": 2363.75,
-      "buy_price": 2264.46,
-      "sell_price": 2463.04,
+      "category": "核心權值",
+      "current_price": 2395.0,
+      "ma20": 2363.5,
+      "buy_price": 2264.42,
+      "sell_price": 2462.58,
+      "high_52w": 2535.0,
+      "low_52w": 1120.07,
       "status": "通道震盪 (觀望持有)",
       "status_color": "blue",
       "chart_labels": [
@@ -21,15 +24,18 @@
         2415.0,
         2435.0,
         2395.0,
-        2400.0
+        2395.0
       ]
     },
     "3008.TW": {
       "name": "大立光",
-      "current_price": 5020.0,
-      "ma20": 4226.17,
-      "buy_price": 3694.88,
-      "sell_price": 4757.47,
+      "category": "核心權值",
+      "current_price": 4955.0,
+      "ma20": 4222.92,
+      "buy_price": 3702.8,
+      "sell_price": 4743.05,
+      "high_52w": 5311.49,
+      "low_52w": 1959.06,
       "status": "高檔警戒 (達到脫手區)",
       "status_color": "red",
       "chart_labels": [
@@ -44,15 +50,18 @@
         4543.5,
         4660.0,
         4610.0,
-        5020.0
+        4955.0
       ]
     },
     "2317.TW": {
       "name": "鴻海",
-      "current_price": 257.0,
-      "ma20": 253.88,
-      "buy_price": 238.57,
-      "sell_price": 269.18,
+      "category": "核心權值",
+      "current_price": 258.5,
+      "ma20": 253.95,
+      "buy_price": 238.6,
+      "sell_price": 269.3,
+      "high_52w": 304.92,
+      "low_52w": 182.08,
       "status": "通道震盪 (觀望持有)",
       "status_color": "blue",
       "chart_labels": [
@@ -67,15 +76,174 @@
         270.0,
         262.0,
         259.5,
-        257.0
+        258.5
+      ]
+    },
+    "2408.TW": {
+      "name": "南亞科",
+      "category": "記憶體/電子零組件",
+      "current_price": 528.0,
+      "ma20": 438.45,
+      "buy_price": 353.75,
+      "sell_price": 523.15,
+      "high_52w": 542.0,
+      "low_52w": 43.91,
+      "status": "高檔警戒 (達到脫手區)",
+      "status_color": "red",
+      "chart_labels": [
+        "08/11",
+        "08/12",
+        "08/13",
+        "08/14",
+        "08/17"
+      ],
+      "chart_prices": [
+        489.0,
+        482.5,
+        514.0,
+        512.0,
+        528.0
+      ]
+    },
+    "2337.TW": {
+      "name": "旺宏",
+      "category": "記憶體/電子零組件",
+      "current_price": 131.0,
+      "ma20": 122.49,
+      "buy_price": 102.82,
+      "sell_price": 142.16,
+      "high_52w": 192.0,
+      "low_52w": 19.0,
+      "status": "通道震盪 (觀望持有)",
+      "status_color": "blue",
+      "chart_labels": [
+        "08/11",
+        "08/12",
+        "08/13",
+        "08/14",
+        "08/17"
+      ],
+      "chart_prices": [
+        132.5,
+        136.5,
+        136.5,
+        137.0,
+        131.0
+      ]
+    },
+    "6770.TW": {
+      "name": "力積電",
+      "category": "記憶體/電子零組件",
+      "current_price": 76.1,
+      "ma20": 64.17,
+      "buy_price": 51.84,
+      "sell_price": 76.51,
+      "high_52w": 94.5,
+      "low_52w": 15.3,
+      "status": "通道震盪 (觀望持有)",
+      "status_color": "blue",
+      "chart_labels": [
+        "08/11",
+        "08/12",
+        "08/13",
+        "08/14",
+        "08/17"
+      ],
+      "chart_prices": [
+        67.0,
+        73.7,
+        74.9,
+        78.4,
+        76.1
+      ]
+    },
+    "8358.TWO": {
+      "name": "金居",
+      "category": "記憶體/電子零組件",
+      "current_price": 427.5,
+      "ma20": 366.57,
+      "buy_price": 297.31,
+      "sell_price": 435.84,
+      "high_52w": 754.55,
+      "low_52w": 151.31,
+      "status": "通道震盪 (觀望持有)",
+      "status_color": "blue",
+      "chart_labels": [
+        "08/11",
+        "08/12",
+        "08/13",
+        "08/14",
+        "08/17"
+      ],
+      "chart_prices": [
+        380.5,
+        418.5,
+        421.0,
+        428.5,
+        427.5
+      ]
+    },
+    "6213.TW": {
+      "name": "聯茂",
+      "category": "記憶體/電子零組件",
+      "current_price": 473.0,
+      "ma20": 358.95,
+      "buy_price": 239.36,
+      "sell_price": 478.54,
+      "high_52w": 490.0,
+      "low_52w": 96.19,
+      "status": "通道震盪 (觀望持有)",
+      "status_color": "blue",
+      "chart_labels": [
+        "08/11",
+        "08/12",
+        "08/13",
+        "08/14",
+        "08/17"
+      ],
+      "chart_prices": [
+        452.0,
+        464.0,
+        469.0,
+        480.0,
+        473.0
+      ]
+    },
+    "6290.TWO": {
+      "name": "良維",
+      "category": "記憶體/電子零組件",
+      "current_price": 219.5,
+      "ma20": 219.53,
+      "buy_price": 197.38,
+      "sell_price": 241.69,
+      "high_52w": 365.71,
+      "low_52w": 100.94,
+      "status": "通道震盪 (觀望持有)",
+      "status_color": "blue",
+      "chart_labels": [
+        "08/11",
+        "08/12",
+        "08/13",
+        "08/14",
+        "08/17"
+      ],
+      "chart_prices": [
+        220.0,
+        218.5,
+        220.5,
+        218.5,
+        219.5
       ]
     },
     "0050.TW": {
       "name": "元大台灣50",
-      "current_price": 106.25,
-      "ma20": 102.33,
+      "category": "高股息 & 指數 ETF",
+      "current_price": 106.4,
+      "ma20": 102.34,
       "buy_price": 96.78,
-      "sell_price": 107.88,
+      "sell_price": 107.9,
+      "high_52w": 111.62,
+      "low_52w": 50.48,
       "status": "通道震盪 (觀望持有)",
       "status_color": "blue",
       "chart_labels": [
@@ -90,15 +258,18 @@
         105.2,
         106.7,
         106.4,
-        106.25
+        106.4
       ]
     },
     "0056.TW": {
       "name": "元大高股息",
+      "category": "高股息 & 指數 ETF",
       "current_price": 53.3,
       "ma20": 50.67,
       "buy_price": 47.67,
       "sell_price": 53.67,
+      "high_52w": 54.0,
+      "low_52w": 31.27,
       "status": "通道震盪 (觀望持有)",
       "status_color": "blue",
       "chart_labels": [
@@ -118,10 +289,13 @@
     },
     "00919.TW": {
       "name": "群益台灣精選高息",
-      "current_price": 30.45,
+      "category": "高股息 & 指數 ETF",
+      "current_price": 30.46,
       "ma20": 29.61,
       "buy_price": 28.69,
       "sell_price": 30.54,
+      "high_52w": 31.04,
+      "low_52w": 18.83,
       "status": "通道震盪 (觀望持有)",
       "status_color": "blue",
       "chart_labels": [
@@ -136,15 +310,18 @@
         30.19,
         30.41,
         30.57,
-        30.45
+        30.46
       ]
     },
     "00878.TW": {
       "name": "國泰永續高股息",
-      "current_price": 33.81,
+      "category": "高股息 & 指數 ETF",
+      "current_price": 33.82,
       "ma20": 32.7,
       "buy_price": 31.38,
-      "sell_price": 34.02,
+      "sell_price": 34.03,
+      "high_52w": 34.62,
+      "low_52w": 18.96,
       "status": "通道震盪 (觀望持有)",
       "status_color": "blue",
       "chart_labels": [
@@ -159,145 +336,7 @@
         33.52,
         33.78,
         33.87,
-        33.81
-      ]
-    },
-    "2408.TW": {
-      "name": "南亞科",
-      "current_price": 525.0,
-      "ma20": 438.3,
-      "buy_price": 353.97,
-      "sell_price": 522.63,
-      "status": "高檔警戒 (達到脫手區)",
-      "status_color": "red",
-      "chart_labels": [
-        "08/11",
-        "08/12",
-        "08/13",
-        "08/14",
-        "08/17"
-      ],
-      "chart_prices": [
-        489.0,
-        482.5,
-        514.0,
-        512.0,
-        525.0
-      ]
-    },
-    "2337.TW": {
-      "name": "旺宏",
-      "current_price": 130.0,
-      "ma20": 122.44,
-      "buy_price": 102.82,
-      "sell_price": 142.06,
-      "status": "通道震盪 (觀望持有)",
-      "status_color": "blue",
-      "chart_labels": [
-        "08/11",
-        "08/12",
-        "08/13",
-        "08/14",
-        "08/17"
-      ],
-      "chart_prices": [
-        132.5,
-        136.5,
-        136.5,
-        137.0,
-        130.0
-      ]
-    },
-    "6770.TW": {
-      "name": "力積電",
-      "current_price": 76.5,
-      "ma20": 64.19,
-      "buy_price": 51.81,
-      "sell_price": 76.57,
-      "status": "通道震盪 (觀望持有)",
-      "status_color": "blue",
-      "chart_labels": [
-        "08/11",
-        "08/12",
-        "08/13",
-        "08/14",
-        "08/17"
-      ],
-      "chart_prices": [
-        67.0,
-        73.7,
-        74.9,
-        78.4,
-        76.5
-      ]
-    },
-    "8358.TWO": {
-      "name": "金居",
-      "current_price": 427.0,
-      "ma20": 366.55,
-      "buy_price": 297.34,
-      "sell_price": 435.76,
-      "status": "通道震盪 (觀望持有)",
-      "status_color": "blue",
-      "chart_labels": [
-        "08/11",
-        "08/12",
-        "08/13",
-        "08/14",
-        "08/17"
-      ],
-      "chart_prices": [
-        380.5,
-        418.5,
-        421.0,
-        428.5,
-        427.0
-      ]
-    },
-    "6213.TW": {
-      "name": "聯茂",
-      "current_price": 477.5,
-      "ma20": 359.18,
-      "buy_price": 239.07,
-      "sell_price": 479.28,
-      "status": "通道震盪 (觀望持有)",
-      "status_color": "blue",
-      "chart_labels": [
-        "08/11",
-        "08/12",
-        "08/13",
-        "08/14",
-        "08/17"
-      ],
-      "chart_prices": [
-        452.0,
-        464.0,
-        469.0,
-        480.0,
-        477.5
-      ]
-    },
-    "6290.TWO": {
-      "name": "良維",
-      "current_price": 217.5,
-      "ma20": 219.43,
-      "buy_price": 197.27,
-      "sell_price": 241.6,
-      "status": "通道震盪 (觀望持有)",
-      "status_color": "blue",
-      "chart_labels": [
-        "08/11",
-        "08/12",
-        "08/13",
-        "08/14",
-        "08/17"
-      ],
-      "chart_prices": [
-        220.0,
-        218.5,
-        220.5,
-        218.5,
-        217.5
+        33.82
       ]
     }
   }
