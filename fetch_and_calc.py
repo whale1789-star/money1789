@@ -56,13 +56,13 @@ def fetch_and_calculate():
             df['Lower_Band'] = (df['MA20'] - df['Spread']).round(2)
             df['MA20'] = df['MA20'].round(2)
 
-            # 取最近 5 個交易日做「5日動態河流數據」
-            last_5 = df.tail(5)
-            labels = [idx.strftime("%m/%d") for idx in last_5.index]
-            prices = [round(float(p), 2) for p in last_5['Close']]
-            river_upper = [float(u) for u in last_5['Upper_Band']]
-            river_ma = [float(m) for m in last_5['MA20']]
-            river_lower = [float(l) for l in last_5['Lower_Band']]
+            # 取過去一個月（約 22 個交易日）做動態河流圖數據
+            month_df = df.tail(22)
+            labels = [idx.strftime("%m/%d") for idx in month_df.index]
+            prices = [round(float(p), 2) for p in month_df['Close']]
+            river_upper = [float(u) for u in month_df['Upper_Band']]
+            river_ma = [float(m) for m in month_df['MA20']]
+            river_lower = [float(l) for l in month_df['Lower_Band']]
 
             # 最新一日數據
             latest_row = df.iloc[-1]
@@ -99,7 +99,7 @@ def fetch_and_calculate():
                 "river_ma": river_ma,
                 "river_lower": river_lower
             }
-            print(f"✅ {name} 完成：現價 {current_price} | 動態河流下軌 {dynamic_buy} | 上軌 {dynamic_sell}")
+            print(f"✅ {name} 計算完成：現價 {current_price} | 近一個月交易日數: {len(labels)}")
             
         except Exception as e:
             print(f"❌ 抓取 {ticker} 失敗: {e}")
@@ -107,7 +107,7 @@ def fetch_and_calculate():
     # 輸出至 JSON
     with open("stock_data.json", "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
-    print("\n🎉 5日動態河流數據計算完成，已寫入 stock_data.json！")
+    print("\n🎉 近一個月動態河流數據計算完成，已寫入 stock_data.json！")
 
 if __name__ == "__main__":
     fetch_and_calculate()
