@@ -5,9 +5,8 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime
 
-# 追蹤與掃描標的清單（涵蓋台股上市/上櫃、高股息ETF、美股科技與原物料）
 STOCK_STRATEGY = {
-    # 核心權值
+    # 台股核心權值
     "2330.TW": {"name": "台積電", "category": "台股核心權值", "currency": "TWD"},
     "3008.TW": {"name": "大立光", "category": "台股核心權值", "currency": "TWD"},
     "2317.TW": {"name": "鴻海", "category": "台股核心權值", "currency": "TWD"},
@@ -23,7 +22,7 @@ STOCK_STRATEGY = {
     "0056.TW": {"name": "元大高股息", "category": "高股息 & 指數 ETF", "currency": "TWD"},
     "00919.TW": {"name": "群益台灣精選高息", "category": "高股息 & 指數 ETF", "currency": "TWD"},
     "00878.TW": {"name": "國泰永續高股息", "category": "高股息 & 指數 ETF", "currency": "TWD"},
-    # ➕ 新增美股標的 (US Stocks)
+    # 美股焦點
     "NVDA": {"name": "輝達 (Nvidia)", "category": "美股焦點", "currency": "USD"},
     "GOOGL": {"name": "Alphabet (Google)", "category": "美股焦點", "currency": "USD"},
     "FCX": {"name": "自由港麥克莫蘭 (FCX)", "category": "美股焦點", "currency": "USD"},
@@ -46,15 +45,18 @@ def fetch_and_calculate():
             stock = yf.Ticker(ticker)
             df = stock.history(period="1y")
             
+            # 1. 濾除 Close 為空或無效的列
+            df = df.dropna(subset=['Close'])
+            
             if df.empty or len(df) < 25:
                 print(f"⚠️ {ticker} 歷史資料不足，跳過。")
                 continue
 
-            # 52 週歷史高低點
+            # 2. 52 週歷史高低點
             high_52w = round(float(df['High'].max()), 2)
             low_52w = round(float(df['Low'].min()), 2)
 
-            # 滾動計算 20 日月線 (MA20) 與標準差 (STD20)
+            # 3. 滾動計算 20 日月線 (MA20) 與標準差 (STD20)
             df['MA20'] = df['Close'].rolling(window=20).mean()
             df['STD20'] = df['Close'].rolling(window=20).std().fillna(0)
             
@@ -64,7 +66,10 @@ def fetch_and_calculate():
             df['Lower_Band'] = (df['MA20'] - df['Spread']).round(2)
             df['MA20'] = df['MA20'].round(2)
 
-            # 取過去一個月（約 22 個交易日）走勢數據
+            # 4. 再次清除計算後產生的 NaN
+            df = df.dropna(subset=['MA20', 'Upper_Band', 'Lower_Band', 'Close'])
+
+            # 5. 取過去一個月（約 22 個有效交易日）
             month_df = df.tail(22)
             labels = [idx.strftime("%m/%d") for idx in month_df.index]
             prices = [round(float(p), 2) for p in month_df['Close']]
@@ -72,8 +77,8 @@ def fetch_and_calculate():
             river_ma = [float(m) for m in month_df['MA20']]
             river_lower = [float(l) for l in month_df['Lower_Band']]
 
-            # 最新一日數據
-            latest_row = df.iloc[-1]
+            # 6. 取最新一日有效數據
+            latest_row = month_df.iloc[-1]
             current_price = round(float(latest_row['Close']), 2)
             dynamic_buy = float(latest_row['Lower_Band'])
             dynamic_sell = float(latest_row['Upper_Band'])
@@ -91,7 +96,7 @@ def fetch_and_calculate():
                 status = "河流震盪 (常態持有)"
                 status_color = "blue"
 
-            # 若跌破或觸及河流下軌，加入推薦清單
+            # 跌破下軌加入超跌推薦
             if is_oversold:
                 bias = round(((current_price - ma20) / ma20) * 100, 2)
                 discount = round(((dynamic_buy - current_price) / dynamic_buy) * 100, 2)
@@ -124,7 +129,7 @@ def fetch_and_calculate():
                 "river_ma": river_ma,
                 "river_lower": river_lower
             }
-            print(f"✅ {name} 計算完成：現價 {current_price} {currency} | 超跌: {is_oversold}")
+            print(f"✅ {name} 計算完成：現價 {current_price} {currency} | 下軌 {dynamic_buy}")
             
         except Exception as e:
             print(f"❌ 抓取 {ticker} 失敗: {e}")
@@ -132,7 +137,7 @@ def fetch_and_calculate():
     # 輸出至 JSON
     with open("stock_data.json", "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
-    print("\n🎉 全市場掃描與動態河流數據計算完成，已寫入 stock_data.json！")
+    print("\n🎉 資料已清理並完成寫入 stock_data.json！")
 
 if __name__ == "__main__":
     fetch_and_calculate()
