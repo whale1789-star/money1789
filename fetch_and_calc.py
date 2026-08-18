@@ -5,33 +5,41 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime
 
-# 追蹤與掃描標的清單（涵蓋上市 .TW 與上櫃 .TWO，可持續擴充）
+# 追蹤與掃描標的清單（涵蓋台股上市/上櫃、高股息ETF、美股科技與原物料）
 STOCK_STRATEGY = {
-    "2330.TW": {"name": "台積電", "category": "核心權值"},
-    "3008.TW": {"name": "大立光", "category": "核心權值"},
-    "2317.TW": {"name": "鴻海", "category": "核心權值"},
-    "2408.TW": {"name": "南亞科", "category": "記憶體/電子零組件"},
-    "2337.TW": {"name": "旺宏", "category": "記憶體/電子零組件"},
-    "6770.TW": {"name": "力積電", "category": "記憶體/電子零組件"},
-    "8358.TWO": {"name": "金居", "category": "記憶體/電子零組件"},
-    "6213.TW": {"name": "聯茂", "category": "記憶體/電子零組件"},
-    "6290.TWO": {"name": "良維", "category": "記憶體/電子零組件"},
-    "0050.TW": {"name": "元大台灣50", "category": "高股息 & 指數 ETF"},
-    "0056.TW": {"name": "元大高股息", "category": "高股息 & 指數 ETF"},
-    "00919.TW": {"name": "群益台灣精選高息", "category": "高股息 & 指數 ETF"},
-    "00878.TW": {"name": "國泰永續高股息", "category": "高股息 & 指數 ETF"},
+    # 核心權值
+    "2330.TW": {"name": "台積電", "category": "台股核心權值", "currency": "TWD"},
+    "3008.TW": {"name": "大立光", "category": "台股核心權值", "currency": "TWD"},
+    "2317.TW": {"name": "鴻海", "category": "台股核心權值", "currency": "TWD"},
+    # 記憶體 / PCB / 電子零組件
+    "2408.TW": {"name": "南亞科", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "2337.TW": {"name": "旺宏", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "6770.TW": {"name": "力積電", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "8358.TWO": {"name": "金居", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "6213.TW": {"name": "聯茂", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "6290.TWO": {"name": "良維", "category": "記憶體/電子零組件", "currency": "TWD"},
+    # 高股息 & 指數 ETF
+    "0050.TW": {"name": "元大台灣50", "category": "高股息 & 指數 ETF", "currency": "TWD"},
+    "0056.TW": {"name": "元大高股息", "category": "高股息 & 指數 ETF", "currency": "TWD"},
+    "00919.TW": {"name": "群益台灣精選高息", "category": "高股息 & 指數 ETF", "currency": "TWD"},
+    "00878.TW": {"name": "國泰永續高股息", "category": "高股息 & 指數 ETF", "currency": "TWD"},
+    # ➕ 新增美股標的 (US Stocks)
+    "NVDA": {"name": "輝達 (Nvidia)", "category": "美股焦點", "currency": "USD"},
+    "GOOGL": {"name": "Alphabet (Google)", "category": "美股焦點", "currency": "USD"},
+    "FCX": {"name": "自由港麥克莫蘭 (FCX)", "category": "美股焦點", "currency": "USD"},
 }
 
 def fetch_and_calculate():
     output_data = {
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "stocks": {},
-        "oversold_stocks": []  # 儲存跌破河流下緣的推薦標的
+        "oversold_stocks": []
     }
 
     for ticker, meta in STOCK_STRATEGY.items():
         name = meta["name"]
         category = meta["category"]
+        currency = meta.get("currency", "TWD")
         print(f"正在抓取 {name} ({ticker}) 的數據...")
         
         try:
@@ -91,6 +99,7 @@ def fetch_and_calculate():
                     "ticker": ticker,
                     "name": name,
                     "category": category,
+                    "currency": currency,
                     "current_price": current_price,
                     "lower_band": dynamic_buy,
                     "bias": bias,
@@ -100,6 +109,7 @@ def fetch_and_calculate():
             output_data["stocks"][ticker] = {
                 "name": name,
                 "category": category,
+                "currency": currency,
                 "current_price": current_price,
                 "ma20": ma20,
                 "buy_price": dynamic_buy,
@@ -114,7 +124,7 @@ def fetch_and_calculate():
                 "river_ma": river_ma,
                 "river_lower": river_lower
             }
-            print(f"✅ {name} 計算完成：現價 {current_price} | 下軌 {dynamic_buy} | 超跌狀態: {is_oversold}")
+            print(f"✅ {name} 計算完成：現價 {current_price} {currency} | 超跌: {is_oversold}")
             
         except Exception as e:
             print(f"❌ 抓取 {ticker} 失敗: {e}")
