@@ -13,7 +13,7 @@
 
     <div class="max-w-5xl mx-auto space-y-6">
         
-        <!-- 🔥 今日超跌掃描推薦專區 (新功能) -->
+        <!-- 今日超跌掃描推薦專區 -->
         <div class="bg-gradient-to-r from-emerald-950/60 to-gray-800 rounded-2xl shadow-xl p-5 border border-emerald-800/40">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-sm md:text-base font-bold text-emerald-400 flex items-center gap-2">
@@ -34,14 +34,19 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-700 pb-6 mb-6">
                 <div>
                     <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">
-                        小布決策儀表板
+                        小布台美決策儀表板
                     </h1>
                     <p id="updated-time" class="text-xs text-gray-400 mt-1">更新時間：載入中...</p>
                 </div>
                 <div>
                     <label for="stock-select" class="block text-xs text-gray-400 mb-1">選擇監控標的：</label>
                     <select id="stock-select" class="bg-gray-700 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 border border-gray-600">
-                        <optgroup label="核心權值">
+                        <optgroup label="美股焦點 (US Stocks)">
+                            <option value="NVDA">輝達 (NVDA)</option>
+                            <option value="GOOGL">Alphabet (GOOGL)</option>
+                            <option value="FCX">自由港麥克莫蘭 (FCX)</option>
+                        </optgroup>
+                        <optgroup label="台股核心權值">
                             <option value="2330.TW" selected>台積電 (2330)</option>
                             <option value="3008.TW">大立光 (3008)</option>
                             <option value="2317.TW">鴻海 (2317)</option>
@@ -66,51 +71,55 @@
 
             <!-- 核心指標卡片群 -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                <!-- 現價卡片 -->
                 <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
-                    <span class="text-xs text-gray-400 block mb-1">最新盤價 / 收盤</span>
+                    <span class="text-xs text-gray-400 block mb-1">最新收盤 / 盤價</span>
                     <div class="flex items-baseline gap-1">
                         <span id="card-price" class="text-2xl md:text-3xl font-bold text-white">--</span>
-                        <span class="text-xs text-gray-400">TWD</span>
+                        <span id="unit-price" class="text-xs text-gray-400">TWD</span>
                     </div>
-                    <div id="card-status" class="mt-2 text-xs font-semibold px-2 py-0.5 rounded-full inline-block bg-blue-900 text-blue-300">
+                    <div id="card-status" class="mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-blue-900 text-blue-300">
                         載入中...
                     </div>
                 </div>
 
+                <!-- 動態入手價 -->
                 <div class="bg-emerald-950/30 p-4 rounded-xl border border-emerald-800/50">
                     <span class="text-xs text-emerald-400 block mb-1">🛒 河流下軌 (甜蜜入手價)</span>
                     <div class="flex items-baseline gap-1">
                         <span id="card-buy" class="text-2xl md:text-3xl font-bold text-emerald-400">--</span>
-                        <span class="text-xs text-gray-400">TWD</span>
+                        <span id="unit-buy" class="text-xs text-gray-400">TWD</span>
                     </div>
                     <p class="text-[11px] text-gray-400 mt-2">河流下緣支撐 / 逢回分批</p>
                 </div>
 
+                <!-- 動態脫手價 -->
                 <div class="bg-rose-950/30 p-4 rounded-xl border border-rose-800/50">
                     <span class="text-xs text-rose-400 block mb-1">🎯 河流上軌 (目標脫手價)</span>
                     <div class="flex items-baseline gap-1">
                         <span id="card-sell" class="text-2xl md:text-3xl font-bold text-rose-400">--</span>
-                        <span class="text-xs text-gray-400">TWD</span>
+                        <span id="unit-sell" class="text-xs text-gray-400">TWD</span>
                     </div>
                     <p class="text-[11px] text-gray-400 mt-2">河流上緣壓力 / 分批停利</p>
                 </div>
 
+                <!-- 52 週歷史區間 -->
                 <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
                     <span class="text-xs text-gray-400 block mb-1">📅 52 週歷史高低點</span>
                     <div class="mt-1 space-y-1 text-sm">
                         <div class="flex justify-between">
                             <span class="text-xs text-rose-400">最高：</span>
-                            <span id="card-52high" class="font-semibold text-white">-- 元</span>
+                            <span id="card-52high" class="font-semibold text-white">--</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-xs text-emerald-400">最低：</span>
-                            <span id="card-52low" class="font-semibold text-white">-- 元</span>
+                            <span id="card-52low" class="font-semibold text-white">--</span>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 近一個月動態河流圖圖表區域 -->
+            <!-- 近一個月動態河流圖 -->
             <div class="bg-gray-700/30 p-4 md:p-6 rounded-xl border border-gray-700">
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                     <h2 class="text-sm font-semibold text-gray-200 flex items-center gap-2">
@@ -133,26 +142,26 @@
                 <div class="space-y-4 text-sm">
                     <div class="grid grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs text-gray-400 mb-1">買入價格 (TWD)</label>
-                            <input type="number" id="calc-buy-price" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500" placeholder="例如：2300">
+                            <label class="block text-xs text-gray-400 mb-1">買入價格 (<span id="calc-curr-1">TWD</span>)</label>
+                            <input type="number" step="any" id="calc-buy-price" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500" placeholder="例如：2300">
                         </div>
                         <div>
-                            <label class="block text-xs text-gray-400 mb-1">預計賣出價 (TWD)</label>
-                            <input type="number" id="calc-sell-price" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500" placeholder="例如：2500">
+                            <label class="block text-xs text-gray-400 mb-1">預計賣出價 (<span id="calc-curr-2">TWD</span>)</label>
+                            <input type="number" step="any" id="calc-sell-price" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500" placeholder="例如：2500">
                         </div>
                     </div>
                     <div>
-                        <label class="block text-xs text-gray-400 mb-1">買入股數 (1 張 = 1000 股)</label>
+                        <label id="label-shares" class="block text-xs text-gray-400 mb-1">買入股數 (1 張 = 1000 股)</label>
                         <input type="number" id="calc-shares" value="1000" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500">
                     </div>
                     <div class="bg-gray-900/60 p-4 rounded-xl space-y-2 border border-gray-700">
                         <div class="flex justify-between text-xs text-gray-400">
                             <span>預估投資本金：</span>
-                            <span id="res-principal" class="text-white font-medium">-- 元</span>
+                            <span id="res-principal" class="text-white font-medium">--</span>
                         </div>
                         <div class="flex justify-between text-xs text-gray-400">
                             <span>預估獲利金額：</span>
-                            <span id="res-profit" class="font-bold text-white">-- 元</span>
+                            <span id="res-profit" class="font-bold text-white">--</span>
                         </div>
                         <div class="flex justify-between text-xs text-gray-400">
                             <span>預期報酬率 (ROI)：</span>
@@ -168,7 +177,7 @@
                         <span>📝</span> 個人標的觀察筆記
                     </h3>
                     <p class="text-xs text-gray-400 mb-2">紀錄針對當前股票的策略（自動儲存於瀏覽器）：</p>
-                    <textarea id="stock-note" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 text-sm" placeholder="輸入個人筆記，例如：回測下軌 2250 逢低分批加碼..."></textarea>
+                    <textarea id="stock-note" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 text-sm" placeholder="輸入個人筆記..."></textarea>
                 </div>
                 <div class="mt-3 flex justify-between items-center">
                     <span id="note-saved-msg" class="text-xs text-emerald-400 opacity-0 transition-opacity">已自動儲存筆記！</span>
@@ -185,6 +194,7 @@
         let chartInstance = null;
         let stockDatabase = {};
         let currentTicker = '2330.TW';
+        let currentCurrency = 'TWD';
 
         async function loadStockData() {
             try {
@@ -195,7 +205,6 @@
                 document.getElementById('updated-time').innerText = '最後更新時間：' + (data.updated_at || '最新');
                 stockDatabase = data.stocks;
                 
-                // 渲染超跌推薦專區
                 renderOversoldList(data.oversold_stocks || []);
 
                 const select = document.getElementById('stock-select');
@@ -206,7 +215,6 @@
             }
         }
 
-        // 渲染超跌推薦列表
         function renderOversoldList(oversoldList) {
             const listEl = document.getElementById('oversold-list');
             const countEl = document.getElementById('oversold-count');
@@ -223,8 +231,8 @@
                 const btn = document.createElement('button');
                 btn.className = 'flex items-center gap-2 bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-600/60 px-3 py-1.5 rounded-lg text-xs transition-all shadow-sm';
                 btn.innerHTML = `
-                    <span class="font-bold text-white">${item.name} (${item.ticker.split('.')[0]})</span>
-                    <span class="text-emerald-300 font-semibold">${item.current_price} 元</span>
+                    <span class="font-bold text-white">${item.name} (${item.ticker})</span>
+                    <span class="text-emerald-300 font-semibold">${item.current_price} ${item.currency || 'TWD'}</span>
                     <span class="bg-emerald-950 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded border border-emerald-700">低於下軌</span>
                 `;
                 btn.onclick = () => {
@@ -242,12 +250,31 @@
             const stock = stockDatabase[ticker];
             if (!stock) return;
 
+            currentCurrency = stock.currency || (ticker.includes('.TW') || ticker.includes('.TWO') ? 'TWD' : 'USD');
+
+            // 貨幣單位適配
+            document.getElementById('unit-price').innerText = currentCurrency;
+            document.getElementById('unit-buy').innerText = currentCurrency;
+            document.getElementById('unit-sell').innerText = currentCurrency;
+            document.getElementById('calc-curr-1').innerText = currentCurrency;
+            document.getElementById('calc-curr-2').innerText = currentCurrency;
+
+            // 美股預設 10 股，台股預設 1000 股
+            if (currentCurrency === 'USD') {
+                document.getElementById('label-shares').innerText = '買入股數 (美股以股計算)';
+                if (document.getElementById('calc-shares').value === '1000') {
+                    document.getElementById('calc-shares').value = '10';
+                }
+            } else {
+                document.getElementById('label-shares').innerText = '買入股數 (1 張 = 1000 股)';
+            }
+
             document.getElementById('card-price').innerText = stock.current_price;
             document.getElementById('card-buy').innerText = stock.buy_price;
             document.getElementById('card-sell').innerText = stock.sell_price;
             
-            document.getElementById('card-52high').innerText = (stock.high_52w != null) ? stock.high_52w + ' 元' : '-- 元';
-            document.getElementById('card-52low').innerText = (stock.low_52w != null) ? stock.low_52w + ' 元' : '-- 元';
+            document.getElementById('card-52high').innerText = (stock.high_52w != null) ? stock.high_52w + ' ' + currentCurrency : '--';
+            document.getElementById('card-52low').innerText = (stock.low_52w != null) ? stock.low_52w + ' ' + currentCurrency : '--';
             
             document.getElementById('calc-buy-price').value = stock.buy_price;
             document.getElementById('calc-sell-price').value = stock.sell_price;
@@ -286,7 +313,7 @@
                     labels: stock.chart_labels,
                     datasets: [
                         {
-                            label: '實際收盤走勢',
+                            label: `實際收盤 (${currentCurrency})`,
                             data: stock.chart_prices,
                             borderColor: '#38bdf8',
                             backgroundColor: '#38bdf8',
@@ -380,9 +407,9 @@
             const profit = (sell - buy) * shares;
             const roi = principal > 0 ? ((profit / principal) * 100).toFixed(2) : 0;
 
-            document.getElementById('res-principal').innerText = principal.toLocaleString() + ' 元';
+            document.getElementById('res-principal').innerText = principal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currentCurrency;
             const profitEl = document.getElementById('res-profit');
-            profitEl.innerText = (profit >= 0 ? '+' : '') + profit.toLocaleString() + ' 元';
+            profitEl.innerText = (profit >= 0 ? '+' : '') + profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currentCurrency;
             profitEl.className = 'font-bold ' + (profit >= 0 ? 'text-rose-400' : 'text-emerald-400');
 
             const roiEl = document.getElementById('res-roi');
