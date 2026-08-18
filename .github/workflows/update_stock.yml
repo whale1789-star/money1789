@@ -2,24 +2,26 @@ name: Update Stock Data
 
 on:
   schedule:
-    - cron: '*/30 1-6 * * 1-5'  # 交易日自動執行
-  workflow_dispatch:            # 支援手動按鈕觸發
+    - cron: '*/30 1-6 * * 1-5'
+  workflow_dispatch:
 
 permissions:
-  contents: write               # 關鍵：賦予寫入權限
+  contents: write
 
 jobs:
-  build:
+  update-data:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -35,5 +37,4 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add stock_data.json
-          git commit -m "Update stock_data.json [skip ci]" || exit 0
-          git push
+          git diff --staged --quiet || (git commit -m "Update stock_data.json [skip ci]" && git push)
