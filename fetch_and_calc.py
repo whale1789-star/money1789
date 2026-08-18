@@ -5,21 +5,28 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime
 
-# 13 檔標的清單（涵蓋上市 .TW 與上櫃 .TWO）
+# 追蹤標的清單（台股 + 3 檔美股：GOOGL, FCX, NVDA）
 STOCK_STRATEGY = {
-    "2330.TW": {"name": "台積電", "category": "核心權值"},
-    "3008.TW": {"name": "大立光", "category": "核心權值"},
-    "2317.TW": {"name": "鴻海", "category": "核心權值"},
-    "2408.TW": {"name": "南亞科", "category": "記憶體/電子零組件"},
-    "2337.TW": {"name": "旺宏", "category": "記憶體/電子零組件"},
-    "6770.TW": {"name": "力積電", "category": "記憶體/電子零組件"},
-    "8358.TWO": {"name": "金居", "category": "記憶體/電子零組件"},
-    "6213.TW": {"name": "聯茂", "category": "記憶體/電子零組件"},
-    "6290.TWO": {"name": "良維", "category": "記憶體/電子零組件"},
-    "0050.TW": {"name": "元大台灣50", "category": "高股息 & 指數 ETF"},
-    "0056.TW": {"name": "元大高股息", "category": "高股息 & 指數 ETF"},
-    "00919.TW": {"name": "群益台灣精選高息", "category": "高股息 & 指數 ETF"},
-    "00878.TW": {"name": "國泰永續高股息", "category": "高股息 & 指數 ETF"},
+    # 核心權值 (台股)
+    "2330.TW": {"name": "台積電", "category": "核心權值", "currency": "TWD"},
+    "3008.TW": {"name": "大立光", "category": "核心權值", "currency": "TWD"},
+    "2317.TW": {"name": "鴻海", "category": "核心權值", "currency": "TWD"},
+    # 記憶體 / 電子零組件 (台股)
+    "2408.TW": {"name": "南亞科", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "2337.TW": {"name": "旺宏", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "6770.TW": {"name": "力積電", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "8358.TWO": {"name": "金居", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "6213.TW": {"name": "聯茂", "category": "記憶體/電子零組件", "currency": "TWD"},
+    "6290.TWO": {"name": "良維", "category": "記憶體/電子零組件", "currency": "TWD"},
+    # 高股息 & 指數 ETF (台股)
+    "0050.TW": {"name": "元大台灣50", "category": "高股息 & 指數 ETF", "currency": "TWD"},
+    "0056.TW": {"name": "元大高股息", "category": "高股息 & 指數 ETF", "currency": "TWD"},
+    "00919.TW": {"name": "群益台灣精選高息", "category": "高股息 & 指數 ETF", "currency": "TWD"},
+    "00878.TW": {"name": "國泰永續高股息", "category": "高股息 & 指數 ETF", "currency": "TWD"},
+    # ➕ 美股重點標的 (US Stocks)
+    "NVDA": {"name": "NVIDIA (輝達)", "category": "美股重點標的", "currency": "USD"},
+    "GOOGL": {"name": "Alphabet (Google)", "category": "美股重點標的", "currency": "USD"},
+    "FCX": {"name": "Freeport-McMoRan (自由港麥克莫蘭)", "category": "美股重點標的", "currency": "USD"},
 }
 
 def fetch_and_calculate():
@@ -31,6 +38,7 @@ def fetch_and_calculate():
     for ticker, meta in STOCK_STRATEGY.items():
         name = meta["name"]
         category = meta["category"]
+        currency = meta["currency"]
         print(f"正在抓取 {name} ({ticker}) 的數據...")
         
         try:
@@ -85,6 +93,7 @@ def fetch_and_calculate():
             output_data["stocks"][ticker] = {
                 "name": name,
                 "category": category,
+                "currency": currency,
                 "current_price": current_price,
                 "ma20": ma20,
                 "buy_price": dynamic_buy,
@@ -99,7 +108,7 @@ def fetch_and_calculate():
                 "river_ma": river_ma,
                 "river_lower": river_lower
             }
-            print(f"✅ {name} 計算完成：現價 {current_price} | 近一個月交易日數: {len(labels)}")
+            print(f"✅ {name} 計算完成：現價 {current_price} {currency} | 近一個月交易天數: {len(labels)}")
             
         except Exception as e:
             print(f"❌ 抓取 {ticker} 失敗: {e}")
@@ -107,7 +116,7 @@ def fetch_and_calculate():
     # 輸出至 JSON
     with open("stock_data.json", "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
-    print("\n🎉 近一個月動態河流數據計算完成，已寫入 stock_data.json！")
+    print("\n🎉 全數標的（包含美股 GOOGL, FCX, NVDA）更新完成，已寫入 stock_data.json！")
 
 if __name__ == "__main__":
     fetch_and_calculate()
