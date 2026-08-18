@@ -1,41 +1,39 @@
-name: 自動更新股票均線通道數據
+name: Update Stock Data
 
 on:
   schedule:
-    # 台灣時間 09:00 到 13:30，每半小時執行一次 (UTC 01:00 ~ 05:30)
-    - cron: '0,30 1-5 * * 1-5'
-    # 台灣時間 14:00 收盤結算更新 (UTC 06:00)
-    - cron: '0 6 * * 1-5'
-  workflow_dispatch: # 支援在 GitHub 介面上手動點擊按鈕觸發執行
+    - cron: '*/30 1-6 * * 1-5'  # 交易日自動執行
+  workflow_dispatch:            # 支援手動按鈕觸發
 
 permissions:
-  contents: write
+  contents: write               # 關鍵：賦予寫入權限
 
 jobs:
-  update-data:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: 檢出專案碼
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 設定 Python 環境
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
 
-      - name: 安裝依賴庫
+      - name: Install dependencies
         run: |
-          pip install --upgrade yfinance pandas requests lxml
+          python -m pip install --upgrade pip
+          pip install yfinance pandas numpy
 
-      - name: 執行 Python 數據抓取與計算
+      - name: Run calculation script
         run: |
           python fetch_and_calc.py
 
-      - name: 自動提交並 Push 更新資料
+      - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add stock_data.json
-          git commit -m "Auto update stock channel data [skip ci]" || exit 0
-          git pull --rebase origin main
+          git commit -m "Update stock_data.json [skip ci]" || exit 0
           git push
