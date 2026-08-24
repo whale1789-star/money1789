@@ -8,6 +8,7 @@ from datetime import datetime
 STOCK_STRATEGY = {
     # 台股核心權值
     "2330.TW": {"name": "台積電", "category": "台股核心權值", "currency": "TWD"},
+    "2308.TW": {"name": "台達電", "category": "台股核心權值", "currency": "TWD"},
     "3008.TW": {"name": "大立光", "category": "台股核心權值", "currency": "TWD"},
     "2317.TW": {"name": "鴻海", "category": "台股核心權值", "currency": "TWD"},
     # 記憶體 / PCB / 電子零組件
@@ -45,18 +46,17 @@ def fetch_and_calculate():
             stock = yf.Ticker(ticker)
             df = stock.history(period="1y")
             
-            # 1. 濾除 Close 為空或無效的列
             df = df.dropna(subset=['Close'])
             
             if df.empty or len(df) < 25:
                 print(f"⚠️ {ticker} 歷史資料不足，跳過。")
                 continue
 
-            # 2. 52 週歷史高低點
+            # 52 週歷史高低點
             high_52w = round(float(df['High'].max()), 2)
             low_52w = round(float(df['Low'].min()), 2)
 
-            # 3. 滾動計算 20 日月線 (MA20) 與標準差 (STD20)
+            # 滾動計算 20 日月線 (MA20) 與標準差 (STD20)
             df['MA20'] = df['Close'].rolling(window=20).mean()
             df['STD20'] = df['Close'].rolling(window=20).std().fillna(0)
             
@@ -66,10 +66,9 @@ def fetch_and_calculate():
             df['Lower_Band'] = (df['MA20'] - df['Spread']).round(2)
             df['MA20'] = df['MA20'].round(2)
 
-            # 4. 再次清除計算後產生的 NaN
             df = df.dropna(subset=['MA20', 'Upper_Band', 'Lower_Band', 'Close'])
 
-            # 5. 取過去一個月（約 22 個有效交易日）
+            # 取過去一個月（約 22 個有效交易日）
             month_df = df.tail(22)
             labels = [idx.strftime("%m/%d") for idx in month_df.index]
             prices = [round(float(p), 2) for p in month_df['Close']]
@@ -77,14 +76,12 @@ def fetch_and_calculate():
             river_ma = [float(m) for m in month_df['MA20']]
             river_lower = [float(l) for l in month_df['Lower_Band']]
 
-            # 6. 取最新一日有效數據
             latest_row = month_df.iloc[-1]
             current_price = round(float(latest_row['Close']), 2)
             dynamic_buy = float(latest_row['Lower_Band'])
             dynamic_sell = float(latest_row['Upper_Band'])
             ma20 = float(latest_row['MA20'])
 
-            # 狀態判定與超跌掃描
             is_oversold = current_price <= dynamic_buy
             if current_price >= dynamic_sell:
                 status = "高檔警戒 (達到脫手區)"
@@ -96,7 +93,6 @@ def fetch_and_calculate():
                 status = "河流震盪 (常態持有)"
                 status_color = "blue"
 
-            # 跌破下軌加入超跌推薦
             if is_oversold:
                 bias = round(((current_price - ma20) / ma20) * 100, 2)
                 discount = round(((dynamic_buy - current_price) / dynamic_buy) * 100, 2)
@@ -134,7 +130,6 @@ def fetch_and_calculate():
         except Exception as e:
             print(f"❌ 抓取 {ticker} 失敗: {e}")
 
-    # 輸出至 JSON
     with open("stock_data.json", "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=2)
     print("\n🎉 資料已清理並完成寫入 stock_data.json！")
