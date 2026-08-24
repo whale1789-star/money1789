@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小布決策儀表板</title>
+    <title>動態月度河流圖與決策儀表板</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -34,7 +34,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-700 pb-6 mb-6">
                 <div>
                     <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">
-                        小布台美決策儀表板
+                        🌊 近一個月動態河流圖與決策儀表板
                     </h1>
                     <p id="updated-time" class="text-xs text-gray-400 mt-1">更新時間：載入中...</p>
                 </div>
@@ -44,10 +44,11 @@
                         <optgroup label="美股焦點 (US Stocks)">
                             <option value="NVDA">輝達 (NVDA)</option>
                             <option value="GOOGL">Alphabet (GOOGL)</option>
-                            <option value="FCX">自由港麥克莫蘭 (FCX)</option>
+                            <option value="FCX">自由港麥克莫料 (FCX)</option>
                         </optgroup>
                         <optgroup label="台股核心權值">
                             <option value="2330.TW" selected>台積電 (2330)</option>
+                            <option value="2308.TW">台達電 (2308)</option>
                             <option value="3008.TW">大立光 (3008)</option>
                             <option value="2317.TW">鴻海 (2317)</option>
                         </optgroup>
@@ -231,7 +232,7 @@
                 const btn = document.createElement('button');
                 btn.className = 'flex items-center gap-2 bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-600/60 px-3 py-1.5 rounded-lg text-xs transition-all shadow-sm';
                 btn.innerHTML = `
-                    <span class="font-bold text-white">${item.name} (${item.ticker})</span>
+                    <span class="font-bold text-white">${item.name} (${item.ticker.split('.')[0]})</span>
                     <span class="text-emerald-300 font-semibold">${item.current_price} ${item.currency || 'TWD'}</span>
                     <span class="bg-emerald-950 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded border border-emerald-700">低於下軌</span>
                 `;
@@ -252,14 +253,12 @@
 
             currentCurrency = stock.currency || (ticker.includes('.TW') || ticker.includes('.TWO') ? 'TWD' : 'USD');
 
-            // 貨幣單位適配
             document.getElementById('unit-price').innerText = currentCurrency;
             document.getElementById('unit-buy').innerText = currentCurrency;
             document.getElementById('unit-sell').innerText = currentCurrency;
             document.getElementById('calc-curr-1').innerText = currentCurrency;
             document.getElementById('calc-curr-2').innerText = currentCurrency;
 
-            // 美股預設 10 股，台股預設 1000 股
             if (currentCurrency === 'USD') {
                 document.getElementById('label-shares').innerText = '買入股數 (美股以股計算)';
                 if (document.getElementById('calc-shares').value === '1000') {
@@ -269,15 +268,15 @@
                 document.getElementById('label-shares').innerText = '買入股數 (1 張 = 1000 股)';
             }
 
-            document.getElementById('card-price').innerText = stock.current_price;
-            document.getElementById('card-buy').innerText = stock.buy_price;
-            document.getElementById('card-sell').innerText = stock.sell_price;
+            document.getElementById('card-price').innerText = (stock.current_price != null && !isNaN(stock.current_price)) ? stock.current_price : '--';
+            document.getElementById('card-buy').innerText = (stock.buy_price != null && !isNaN(stock.buy_price)) ? stock.buy_price : '--';
+            document.getElementById('card-sell').innerText = (stock.sell_price != null && !isNaN(stock.sell_price)) ? stock.sell_price : '--';
             
-            document.getElementById('card-52high').innerText = (stock.high_52w != null) ? stock.high_52w + ' ' + currentCurrency : '--';
-            document.getElementById('card-52low').innerText = (stock.low_52w != null) ? stock.low_52w + ' ' + currentCurrency : '--';
+            document.getElementById('card-52high').innerText = (stock.high_52w != null && !isNaN(stock.high_52w)) ? stock.high_52w + ' ' + currentCurrency : '--';
+            document.getElementById('card-52low').innerText = (stock.low_52w != null && !isNaN(stock.low_52w)) ? stock.low_52w + ' ' + currentCurrency : '--';
             
-            document.getElementById('calc-buy-price').value = stock.buy_price;
-            document.getElementById('calc-sell-price').value = stock.sell_price;
+            document.getElementById('calc-buy-price').value = stock.buy_price || '';
+            document.getElementById('calc-sell-price').value = stock.sell_price || '';
             calculateProfit();
 
             const savedNote = localStorage.getItem('note_' + ticker) || '';
