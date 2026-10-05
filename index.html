@@ -34,7 +34,7 @@
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-700 pb-6 mb-6">
                 <div>
                     <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">
-                      小布決策儀表板1005
+                        小布決策儀表板
                     </h1>
                     <p id="updated-time" class="text-xs text-gray-400 mt-1">更新時間：載入中...</p>
                 </div>
@@ -52,16 +52,13 @@
                             <option value="3008.TW">大立光 (3008)</option>
                             <option value="2317.TW">鴻海 (2317)</option>
                         </optgroup>
-                        <optgroup label="半導體 / 矽晶圓 / 記憶體">
-                            <!-- 新增 6182 合晶 (上櫃市場 .TWO) -->
+                        <optgroup label="記憶體 / PCB / 電子零組件">
+                            <!-- 精準對齊 JSON Key：6182.TWO 與 3481.TW -->
                             <option value="6182.TWO">合晶 (6182)</option>
+                            <option value="3481.TW">群創 (3481)</option>
                             <option value="2408.TW">南亞科 (2408)</option>
                             <option value="2337.TW">旺宏 (2337)</option>
                             <option value="6770.TW">力積電 (6770)</option>
-                        </optgroup>
-                        <optgroup label="PCB / 電子零組件 / 面板封裝">
-                            <!-- 新增 3481 群創 (集中市場 .TW) -->
-                            <option value="3481.TW">群創 (3481)</option>
                             <option value="8358.TWO">金居 (8358)</option>
                             <option value="6213.TW">聯茂 (6213)</option>
                             <option value="6290.TWO">良維 (6290)</option>
@@ -260,6 +257,7 @@
 
         async function loadStockData() {
             try {
+                // 加上時間戳記避免瀏覽器讀取到舊快取
                 const res = await fetch('stock_data.json?t=' + new Date().getTime());
                 if (!res.ok) throw new Error('無法讀取 stock_data.json');
                 const data = await res.json();
@@ -308,105 +306,80 @@
         }
 
         function renderStockView(ticker) {
-    currentTicker = ticker;
+            currentTicker = ticker;
 
-    // 1. 多重鍵值容錯：先找完整代號 (如 6182.TWO)，再找純數字 (如 6182)
-    const pureCode = ticker.split('.')[0];
-    const stock = stockDatabase[ticker] || 
-                  stockDatabase[pureCode] || 
-                  stockDatabase[pureCode + '.TW'] || 
-                  stockDatabase[pureCode + '.TWO'];
+            // 自動相容鍵值比對：無論是傳入完整代碼、純數字都能精準找到
+            const pureCode = ticker.split('.')[0];
+            const stock = stockDatabase[ticker] || 
+                          stockDatabase[pureCode] || 
+                          stockDatabase[pureCode + '.TW'] || 
+                          stockDatabase[pureCode + '.TWO'];
 
-    // 2. 若依然無資料，給予明確介面回饋，不再靜默 return
-    if (!stock) {
-        console.warn(`[資料缺失] 在 stock_data.json 中找不到 ${ticker} 或 ${pureCode} 的數據。`);
-        console.log("目前 stock_data.json 內包含的標的清單為：", Object.keys(stockDatabase));
+            if (!stock) {
+                console.warn(`[找不到標的] 鍵值為 ${ticker} 的股票不存在於資料庫中。`);
+                return;
+            }
 
-        // 標題狀態提示
-        document.getElementById('card-status').innerText = '無此標的數據';
-        document.getElementById('card-status').className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-gray-700 text-gray-300';
-        
-        // 數值重設為 --
-        document.getElementById('card-price').innerText = '--';
-        document.getElementById('card-buy').innerText = '--';
-        document.getElementById('card-sell').innerText = '--';
-        document.getElementById('card-52high').innerText = '--';
-        document.getElementById('card-52low').innerText = '--';
-        
-        // 指標提示
-        document.getElementById('kd-text').innerText = '後端尚未產出指標資料';
-        document.getElementById('rsi-text').innerText = '後端尚未產出指標資料';
-        document.getElementById('macd-text').innerText = '後端尚未產出指標資料';
-        
-        // 銷毀舊圖表避免殘留上一檔股票
-        if (chartInstance) {
-            chartInstance.destroy();
-            chartInstance = null;
+            currentCurrency = stock.currency || (ticker.includes('.TW') || ticker.includes('.TWO') ? 'TWD' : 'USD');
+
+            document.getElementById('unit-price').innerText = currentCurrency;
+            document.getElementById('unit-buy').innerText = currentCurrency;
+            document.getElementById('unit-sell').innerText = currentCurrency;
+            document.getElementById('calc-curr-1').innerText = currentCurrency;
+            document.getElementById('calc-curr-2').innerText = currentCurrency;
+
+            if (currentCurrency === 'USD') {
+                document.getElementById('label-shares').innerText = '買入股數 (美股以股計算)';
+                if (document.getElementById('calc-shares').value === '1000') {
+                    document.getElementById('calc-shares').value = '10';
+                }
+            } else {
+                document.getElementById('label-shares').innerText = '買入股數 (1 張 = 1000 股)';
+            }
+
+            document.getElementById('card-price').innerText = (stock.current_price != null && !isNaN(stock.current_price)) ? stock.current_price : '--';
+            document.getElementById('card-buy').innerText = (stock.buy_price != null && !isNaN(stock.buy_price)) ? stock.buy_price : '--';
+            document.getElementById('card-sell').innerText = (stock.sell_price != null && !isNaN(stock.sell_price)) ? stock.sell_price : '--';
+            
+            document.getElementById('card-52high').innerText = (stock.high_52w != null && !isNaN(stock.high_52w)) ? stock.high_52w + ' ' + currentCurrency : '--';
+            document.getElementById('card-52low').innerText = (stock.low_52w != null && !isNaN(stock.low_52w)) ? stock.low_52w + ' ' + currentCurrency : '--';
+            
+            document.getElementById('calc-buy-price').value = stock.buy_price || '';
+            document.getElementById('calc-sell-price').value = stock.sell_price || '';
+            calculateProfit();
+
+            const savedNote = localStorage.getItem('note_' + ticker) || '';
+            document.getElementById('stock-note').value = savedNote;
+
+            const statusEl = document.getElementById('card-status');
+            statusEl.innerText = stock.status;
+            if (stock.status_color === 'red') {
+                statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-rose-900 text-rose-200';
+            } else if (stock.status_color === 'green') {
+                statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-emerald-900 text-emerald-200';
+            } else {
+                statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-blue-900 text-blue-200';
+            }
+
+            // 渲染三大指標診斷
+            if (stock.indicators) {
+                const ind = stock.indicators;
+                document.getElementById('kd-values').innerText = `K: ${ind.k} | D: ${ind.d}`;
+                document.getElementById('kd-text').innerText = ind.kd_status;
+
+                document.getElementById('rsi-value').innerText = `RSI: ${ind.rsi}`;
+                document.getElementById('rsi-text').innerText = ind.rsi_status;
+
+                document.getElementById('macd-value').innerText = `柱狀體: ${ind.macd_hist}`;
+                document.getElementById('macd-text').innerText = ind.macd_status;
+            } else {
+                document.getElementById('kd-text').innerText = '尚無指標資料';
+                document.getElementById('rsi-text').innerText = '尚無指標資料';
+                document.getElementById('macd-text').innerText = '尚無指標資料';
+            }
+
+            renderRiverChart(stock);
         }
-        return;
-    }
-
-    // 3. 正常渲染流程
-    currentCurrency = stock.currency || (ticker.includes('.TW') || ticker.includes('.TWO') ? 'TWD' : 'USD');
-
-    document.getElementById('unit-price').innerText = currentCurrency;
-    document.getElementById('unit-buy').innerText = currentCurrency;
-    document.getElementById('unit-sell').innerText = currentCurrency;
-    document.getElementById('calc-curr-1').innerText = currentCurrency;
-    document.getElementById('calc-curr-2').innerText = currentCurrency;
-
-    if (currentCurrency === 'USD') {
-        document.getElementById('label-shares').innerText = '買入股數 (美股以股計算)';
-        if (document.getElementById('calc-shares').value === '1000') {
-            document.getElementById('calc-shares').value = '10';
-        }
-    } else {
-        document.getElementById('label-shares').innerText = '買入股數 (1 張 = 1000 股)';
-    }
-
-    document.getElementById('card-price').innerText = (stock.current_price != null && !isNaN(stock.current_price)) ? stock.current_price : '--';
-    document.getElementById('card-buy').innerText = (stock.buy_price != null && !isNaN(stock.buy_price)) ? stock.buy_price : '--';
-    document.getElementById('card-sell').innerText = (stock.sell_price != null && !isNaN(stock.sell_price)) ? stock.sell_price : '--';
-    
-    document.getElementById('card-52high').innerText = (stock.high_52w != null && !isNaN(stock.high_52w)) ? stock.high_52w + ' ' + currentCurrency : '--';
-    document.getElementById('card-52low').innerText = (stock.low_52w != null && !isNaN(stock.low_52w)) ? stock.low_52w + ' ' + currentCurrency : '--';
-    
-    document.getElementById('calc-buy-price').value = stock.buy_price || '';
-    document.getElementById('calc-sell-price').value = stock.sell_price || '';
-    calculateProfit();
-
-    const savedNote = localStorage.getItem('note_' + ticker) || '';
-    document.getElementById('stock-note').value = savedNote;
-
-    const statusEl = document.getElementById('card-status');
-    statusEl.innerText = stock.status || '常態區間';
-    if (stock.status_color === 'red') {
-        statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-rose-900 text-rose-200';
-    } else if (stock.status_color === 'green') {
-        statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-emerald-900 text-emerald-200';
-    } else {
-        statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-blue-900 text-blue-200';
-    }
-
-    // 三大指標診斷渲染
-    if (stock.indicators) {
-        const ind = stock.indicators;
-        document.getElementById('kd-values').innerText = `K: ${ind.k} | D: ${ind.d}`;
-        document.getElementById('kd-text').innerText = ind.kd_status || '分析中...';
-
-        document.getElementById('rsi-value').innerText = `RSI: ${ind.rsi}`;
-        document.getElementById('rsi-text').innerText = ind.rsi_status || '分析中...';
-
-        document.getElementById('macd-value').innerText = `柱狀體: ${ind.macd_hist}`;
-        document.getElementById('macd-text').innerText = ind.macd_status || '分析中...';
-    } else {
-        document.getElementById('kd-text').innerText = '尚無指標資料';
-        document.getElementById('rsi-text').innerText = '尚無指標資料';
-        document.getElementById('macd-text').innerText = '尚無指標資料';
-    }
-
-    renderRiverChart(stock);
-}
 
         function renderRiverChart(stock) {
             const ctx = document.getElementById('stockChart').getContext('2d');
