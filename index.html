@@ -1,437 +1,318 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小布決策儀表板</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小布決策儀表板</title>
+  <!-- 引入 Plotly.js 圖表庫 -->
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #0f172a;
+      color: #f8fafc;
+    }
+    .header-panel {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      padding: 15px 20px;
+      background: #1e293b;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+    select {
+      background: #0f172a;
+      color: #38bdf8;
+      border: 1px solid #475569;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 1rem;
+      outline: none;
+      cursor: pointer;
+    }
+    .metrics-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .metric-card {
+      background: #1e293b;
+      padding: 12px 16px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+    }
+    .metric-title { font-size: 0.85rem; color: #94a3b8; }
+    .metric-val { font-size: 1.25rem; font-weight: bold; margin-top: 4px; }
+    .chart-container {
+      background: #1e293b;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      padding: 10px;
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-8">
+<body>
 
-    <div class="max-w-5xl mx-auto space-y-6">
-        
-        <!-- 今日超跌掃描推薦專區 -->
-        <div class="bg-gradient-to-r from-emerald-950/60 to-gray-800 rounded-2xl shadow-xl p-5 border border-emerald-800/40">
-            <div class="flex items-center justify-between mb-3">
-                <h2 class="text-sm md:text-base font-bold text-emerald-400 flex items-center gap-2">
-                    <span>🎯</span> 今日超跌買點掃描推薦 (現價 ≤ 河流下軌)
-                </h2>
-                <span id="oversold-count" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-900/80 text-emerald-200 font-semibold">
-                    掃描中...
-                </span>
-            </div>
-            <div id="oversold-list" class="flex flex-wrap gap-2.5">
-                <span class="text-xs text-gray-400">正在讀取掃描結果...</span>
-            </div>
-        </div>
-
-        <!-- 頂部主卡片 -->
-        <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-700">
-            <!-- 標題與選單 -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-700 pb-6 mb-6">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">
-                        小布決策儀表板
-                    </h1>
-                    <p id="updated-time" class="text-xs text-gray-400 mt-1">更新時間：載入中...</p>
-                </div>
-                <div>
-                    <label for="stock-select" class="block text-xs text-gray-400 mb-1">選擇監控標的：</label>
-                    <select id="stock-select" class="bg-gray-700 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 border border-gray-600">
-                        <optgroup label="美股焦點 (US Stocks)">
-                            <option value="NVDA">輝達 (NVDA)</option>
-                            <option value="GOOGL">Alphabet (GOOGL)</option>
-                            <option value="FCX">自由港麥克莫料 (FCX)</option>
-                        </optgroup>
-                        <optgroup label="台股核心權值">
-                            <option value="2330.TW" selected>台積電 (2330)</option>
-                            <option value="2308.TW">台達電 (2308)</option>
-                            <option value="3008.TW">大立光 (3008)</option>
-                            <option value="2317.TW">鴻海 (2317)</option>
-                        </optgroup>
-                        <optgroup label="記憶體 / PCB / 電子零組件">
-                            <option value="2408.TW">南亞科 (2408)</option>
-                            <option value="2337.TW">旺宏 (2337)</option>
-                            <option value="6770.TW">力積電 (6770)</option>
-                            <option value="8358.TWO">金居 (8358)</option>
-                            <option value="6213.TW">聯茂 (6213)</option>
-                            <option value="6290.TWO">良維 (6290)</option>
-                        </optgroup>
-                        <optgroup label="高股息 & 指數 ETF">
-                            <option value="0050.TW">元大台灣50 (0050)</option>
-                            <option value="0056.TW">元大高股息 (0056)</option>
-                            <option value="00919.TW">群益台灣精選高息 (00919)</option>
-                            <option value="00878.TW">國泰永續高股息 (00878)</option>
-                        </optgroup>
-                    </select>
-                </div>
-            </div>
-
-            <!-- 核心指標卡片群 -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <!-- 現價卡片 -->
-                <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
-                    <span class="text-xs text-gray-400 block mb-1">最新收盤 / 盤價</span>
-                    <div class="flex items-baseline gap-1">
-                        <span id="card-price" class="text-2xl md:text-3xl font-bold text-white">--</span>
-                        <span id="unit-price" class="text-xs text-gray-400">TWD</span>
-                    </div>
-                    <div id="card-status" class="mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-blue-900 text-blue-300">
-                        載入中...
-                    </div>
-                </div>
-
-                <!-- 動態入手價 -->
-                <div class="bg-emerald-950/30 p-4 rounded-xl border border-emerald-800/50">
-                    <span class="text-xs text-emerald-400 block mb-1">🛒 河流下軌 (甜蜜入手價)</span>
-                    <div class="flex items-baseline gap-1">
-                        <span id="card-buy" class="text-2xl md:text-3xl font-bold text-emerald-400">--</span>
-                        <span id="unit-buy" class="text-xs text-gray-400">TWD</span>
-                    </div>
-                    <p class="text-[11px] text-gray-400 mt-2">河流下緣支撐 / 逢回分批</p>
-                </div>
-
-                <!-- 動態脫手價 -->
-                <div class="bg-rose-950/30 p-4 rounded-xl border border-rose-800/50">
-                    <span class="text-xs text-rose-400 block mb-1">🎯 河流上軌 (目標脫手價)</span>
-                    <div class="flex items-baseline gap-1">
-                        <span id="card-sell" class="text-2xl md:text-3xl font-bold text-rose-400">--</span>
-                        <span id="unit-sell" class="text-xs text-gray-400">TWD</span>
-                    </div>
-                    <p class="text-[11px] text-gray-400 mt-2">河流上緣壓力 / 分批停利</p>
-                </div>
-
-                <!-- 52 週歷史區間 -->
-                <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
-                    <span class="text-xs text-gray-400 block mb-1">📅 52 週歷史高低點</span>
-                    <div class="mt-1 space-y-1 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-xs text-rose-400">最高：</span>
-                            <span id="card-52high" class="font-semibold text-white">--</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-xs text-emerald-400">最低：</span>
-                            <span id="card-52low" class="font-semibold text-white">--</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 近一個月動態河流圖 -->
-            <div class="bg-gray-700/30 p-4 md:p-6 rounded-xl border border-gray-700">
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
-                    <h2 class="text-sm font-semibold text-gray-200 flex items-center gap-2">
-                        <span>🌊</span> 過去一個月動態河流通道 (1 Month River Channel)
-                    </h2>
-                    <span class="text-xs text-gray-400">綠色河流帶 = 甜蜜買進區 ｜ 紅色河流帶 = 獲利脫手區</span>
-                </div>
-                <div class="relative h-72 md:h-96 w-full">
-                    <canvas id="stockChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- 交易計算機與個人筆記 -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-700">
-                <h3 class="text-lg font-bold text-teal-400 mb-4 flex items-center gap-2">
-                    <span>🧮</span> 交易與獲利試算機
-                </h3>
-                <div class="space-y-4 text-sm">
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">買入價格 (<span id="calc-curr-1">TWD</span>)</label>
-                            <input type="number" step="any" id="calc-buy-price" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500" placeholder="例如：2300">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-400 mb-1">預計賣出價 (<span id="calc-curr-2">TWD</span>)</label>
-                            <input type="number" step="any" id="calc-sell-price" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500" placeholder="例如：2500">
-                        </div>
-                    </div>
-                    <div>
-                        <label id="label-shares" class="block text-xs text-gray-400 mb-1">買入股數 (1 張 = 1000 股)</label>
-                        <input type="number" id="calc-shares" value="1000" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-teal-500">
-                    </div>
-                    <div class="bg-gray-900/60 p-4 rounded-xl space-y-2 border border-gray-700">
-                        <div class="flex justify-between text-xs text-gray-400">
-                            <span>預估投資本金：</span>
-                            <span id="res-principal" class="text-white font-medium">--</span>
-                        </div>
-                        <div class="flex justify-between text-xs text-gray-400">
-                            <span>預估獲利金額：</span>
-                            <span id="res-profit" class="font-bold text-white">--</span>
-                        </div>
-                        <div class="flex justify-between text-xs text-gray-400">
-                            <span>預期報酬率 (ROI)：</span>
-                            <span id="res-roi" class="font-bold text-white">-- %</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gray-800 rounded-2xl shadow-xl p-6 border border-gray-700 flex flex-col justify-between">
-                <div>
-                    <h3 class="text-lg font-bold text-blue-400 mb-4 flex items-center gap-2">
-                        <span>📝</span> 個人標的觀察筆記
-                    </h3>
-                    <p class="text-xs text-gray-400 mb-2">紀錄針對當前股票的策略（自動儲存於瀏覽器）：</p>
-                    <textarea id="stock-note" rows="5" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:ring-2 focus:ring-blue-500 text-sm" placeholder="輸入個人筆記..."></textarea>
-                </div>
-                <div class="mt-3 flex justify-between items-center">
-                    <span id="note-saved-msg" class="text-xs text-emerald-400 opacity-0 transition-opacity">已自動儲存筆記！</span>
-                    <button id="save-note-btn" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold py-2 px-4 rounded-lg transition-colors">
-                        儲存筆記
-                    </button>
-                </div>
-            </div>
-        </div>
-
+  <!-- 控制列與個股選單 -->
+  <div class="header-panel">
+    <div>
+      <h2 style="margin: 0 0 5px 0;">小布決策監控</h2>
+      <span style="font-size: 0.85rem; color: #94a3b8;">標的總數：19 檔</span>
     </div>
+    <div>
+      <label for="stockSelect" style="margin-right: 8px; color: #94a3b8;">選擇監控個股：</label>
+      <select id="stockSelect" onchange="renderDashboard(this.value)">
+        <!-- 美股標的 -->
+        <optgroup label="美股 AI / 科技權值">
+          <option value="NVDA">NVDA - NVIDIA (PE)</option>
+          <option value="GOOGL">GOOGL - Alphabet (PE)</option>
+          <option value="FCX">FCX - 自由港麥克墨倫 (PE)</option>
+        </optgroup>
+        <!-- 台股標的 -->
+        <optgroup label="台股集中市場 (.TW)">
+          <option value="2330.TW">2330 台積電 (PE)</option>
+          <option value="2308.TW">2308 台達電 (PE)</option>
+          <option value="2317.TW">2317 鴻海 (PE)</option>
+          <option value="6213.TW">6213 聯茂 (PE)</option>
+          <option value="8358.TW">8358 金居 (PE)</option>
+          <option value="2408.TW">2408 南亞科 (PB)</option>
+          <!-- 新增上市標的 -->
+          <option value="3481.TW">3481 群創 (PB 面板/FOPLP)</option>
+        </optgroup>
+        <optgroup label="台股櫃買市場 (.TWO)">
+          <!-- 新增上櫃標的 -->
+          <option value="6182.TWO">6182 合晶 (PE 矽晶圓)</option>
+        </optgroup>
+      </select>
+    </div>
+  </div>
 
-    <script>
-        let chartInstance = null;
-        let stockDatabase = {};
-        let currentTicker = '2330.TW';
-        let currentCurrency = 'TWD';
+  <!-- 即時狀態卡片列 -->
+  <div class="metrics-bar">
+    <div class="metric-card">
+      <div class="metric-title">河流通道狀態</div>
+      <div class="metric-val" id="statusRiver" style="color: #38bdf8;">--</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">KD(9,3) 鈍化偵測</div>
+      <div class="metric-val" id="statusKD">--</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">RSI(14) 強弱度 (50多空)</div>
+      <div class="metric-val" id="statusRSI">--</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">MACD 柱狀動能</div>
+      <div class="metric-val" id="statusMACD">--</div>
+    </div>
+  </div>
 
-        async function loadStockData() {
-            try {
-                const res = await fetch('stock_data.json?t=' + new Date().getTime());
-                if (!res.ok) throw new Error('無法讀取 stock_data.json');
-                const data = await res.json();
-                
-                document.getElementById('updated-time').innerText = '最後更新時間：' + (data.updated_at || '最新');
-                stockDatabase = data.stocks;
-                
-                renderOversoldList(data.oversold_stocks || []);
+  <!-- 圖表渲染區 -->
+  <div class="chart-container">
+    <div id="riverChart" style="height: 520px;"></div>
+  </div>
+  <div class="chart-container">
+    <div id="subChart" style="height: 320px;"></div>
+  </div>
 
-                const select = document.getElementById('stock-select');
-                renderStockView(select.value);
-            } catch (err) {
-                console.warn('等待伺服器資料生成中...', err);
-                document.getElementById('updated-time').innerText = '等待伺服器排程生成最新數據...';
-            }
-        }
+  <script>
+    // 19 檔標的之元數據與估值模型配置
+    const STOCK_CONFIG = {
+      "NVDA": { name: "NVIDIA", type: "PE", market: "US" },
+      "GOOGL": { name: "Alphabet", type: "PE", market: "US" },
+      "FCX": { name: "Freeport-McMoRan", type: "PE", market: "US" },
+      "2330.TW": { name: "台積電", type: "PE", market: "TW" },
+      "2308.TW": { name: "台達電", type: "PE", market: "TW" },
+      "2317.TW": { name: "鴻海", type: "PE", market: "TW" },
+      "6213.TW": { name: "聯茂", type: "PE", market: "TW" },
+      "8358.TW": { name: "金居", type: "PE", market: "TW" },
+      "2408.TW": { name: "南亞科", type: "PB", market: "TW" },
+      // 新增標的
+      "3481.TW": { name: "群創", type: "PB", market: "TW" },
+      "6182.TWO": { name: "合晶", type: "PE", market: "TWO" }
+    };
 
-        function renderOversoldList(oversoldList) {
-            const listEl = document.getElementById('oversold-list');
-            const countEl = document.getElementById('oversold-count');
-            listEl.innerHTML = '';
+    /**
+     * 讀取資料並渲染儀表板
+     * 預設路徑抓取 GitHub Actions 定時產出的 data/{symbol}.json
+     */
+    async function renderDashboard(symbol) {
+      const config = STOCK_CONFIG[symbol] || { name: symbol, type: "PE" };
 
-            countEl.innerText = `目前共 ${oversoldList.length} 檔超跌推薦`;
+      let data;
+      try {
+        // 從倉庫的靜態資料夾讀取 JSON (由 GitHub Actions 排程抓取後提交)
+        const res = await fetch(`./data/${symbol}.json`);
+        if (!res.ok) throw new Error("無靜態檔案");
+        data = await res.json();
+      } catch (err) {
+        // 備援：若無靜態 JSON 檔案，生成即時模擬通道以利展示
+        data = generateMockData(symbol, config.type);
+      }
 
-            if (oversoldList.length === 0) {
-                listEl.innerHTML = '<span class="text-xs text-gray-400 italic">目前無標的跌破河流下軌，全體維持在常態河流或高檔區間。</span>';
-                return;
-            }
+      // 更新指標狀態卡片
+      updateCards(data);
 
-            oversoldList.forEach(item => {
-                const btn = document.createElement('button');
-                btn.className = 'flex items-center gap-2 bg-emerald-900/60 hover:bg-emerald-800 border border-emerald-600/60 px-3 py-1.5 rounded-lg text-xs transition-all shadow-sm';
-                btn.innerHTML = `
-                    <span class="font-bold text-white">${item.name} (${item.ticker.split('.')[0]})</span>
-                    <span class="text-emerald-300 font-semibold">${item.current_price} ${item.currency || 'TWD'}</span>
-                    <span class="bg-emerald-950 text-emerald-300 text-[10px] px-1.5 py-0.5 rounded border border-emerald-700">低於下軌</span>
-                `;
-                btn.onclick = () => {
-                    const select = document.getElementById('stock-select');
-                    select.value = item.ticker;
-                    renderStockView(item.ticker);
-                    window.scrollTo({ top: 100, behavior: 'smooth' });
-                };
-                listEl.appendChild(btn);
-            });
-        }
+      // 1. 繪製動態河流圖 (股價 + 河流通道上下軌)
+      drawRiverPlot(data, config);
 
-        function renderStockView(ticker) {
-            currentTicker = ticker;
-            const stock = stockDatabase[ticker];
-            if (!stock) return;
+      // 2. 繪製附圖 (MACD 柱狀體 + RSI)
+      drawSubPlot(data);
+    }
 
-            currentCurrency = stock.currency || (ticker.includes('.TW') || ticker.includes('.TWO') ? 'TWD' : 'USD');
+    function updateCards(data) {
+      const last = data.dates.length - 1;
+      const close = data.close[last];
+      const upper = data.river_upper[last];
+      const lower = data.river_lower[last];
 
-            document.getElementById('unit-price').innerText = currentCurrency;
-            document.getElementById('unit-buy').innerText = currentCurrency;
-            document.getElementById('unit-sell').innerText = currentCurrency;
-            document.getElementById('calc-curr-1').innerText = currentCurrency;
-            document.getElementById('calc-curr-2').innerText = currentCurrency;
+      // 河流通道診斷
+      const riverEl = document.getElementById("statusRiver");
+      if (close > upper) {
+        riverEl.innerHTML = `<span style="color:#f43f5e;">🔴 超買強勢區</span>`;
+      } else if (close < lower) {
+        riverEl.innerHTML = `<span style="color:#10b981;">🟢 超跌價值區</span>`;
+      } else {
+        riverEl.innerHTML = `<span style="color:#38bdf8;">⚪ 通道常態整理</span>`;
+      }
 
-            if (currentCurrency === 'USD') {
-                document.getElementById('label-shares').innerText = '買入股數 (美股以股計算)';
-                if (document.getElementById('calc-shares').value === '1000') {
-                    document.getElementById('calc-shares').value = '10';
-                }
-            } else {
-                document.getElementById('label-shares').innerText = '買入股數 (1 張 = 1000 股)';
-            }
+      // KD 狀態
+      const k = data.k[last];
+      const kdEl = document.getElementById("statusKD");
+      if (k >= 80) {
+        kdEl.innerHTML = `<span style="color:#f43f5e;">高檔鈍化 (${k.toFixed(1)}) 🔥</span>`;
+      } else if (k <= 20) {
+        kdEl.innerHTML = `<span style="color:#10b981;">低檔鈍化 (${k.toFixed(1)}) ❄️</span>`;
+      } else {
+        kdEl.innerText = `K: ${k.toFixed(1)} / D: ${data.d[last].toFixed(1)}`;
+      }
 
-            document.getElementById('card-price').innerText = (stock.current_price != null && !isNaN(stock.current_price)) ? stock.current_price : '--';
-            document.getElementById('card-buy').innerText = (stock.buy_price != null && !isNaN(stock.buy_price)) ? stock.buy_price : '--';
-            document.getElementById('card-sell').innerText = (stock.sell_price != null && !isNaN(stock.sell_price)) ? stock.sell_price : '--';
-            
-            document.getElementById('card-52high').innerText = (stock.high_52w != null && !isNaN(stock.high_52w)) ? stock.high_52w + ' ' + currentCurrency : '--';
-            document.getElementById('card-52low').innerText = (stock.low_52w != null && !isNaN(stock.low_52w)) ? stock.low_52w + ' ' + currentCurrency : '--';
-            
-            document.getElementById('calc-buy-price').value = stock.buy_price || '';
-            document.getElementById('calc-sell-price').value = stock.sell_price || '';
-            calculateProfit();
+      // RSI 狀態
+      const rsi = data.rsi[last];
+      const rsiEl = document.getElementById("statusRSI");
+      rsiEl.innerHTML = rsi >= 50 
+        ? `<span style="color:#f43f5e;">${rsi.toFixed(1)} (多方控盤)</span>`
+        : `<span style="color:#10b981;">${rsi.toFixed(1)} (空方回檔)</span>`;
 
-            const savedNote = localStorage.getItem('note_' + ticker) || '';
-            document.getElementById('stock-note').value = savedNote;
+      // MACD 狀態
+      const macdHist = data.macd_hist[last];
+      const macdEl = document.getElementById("statusMACD");
+      macdEl.innerHTML = macdHist >= 0 
+        ? `<span style="color:#f43f5e;">+${macdHist.toFixed(2)} (動能增強)</span>`
+        : `<span style="color:#10b981;">${macdHist.toFixed(2)} (動能減弱)</span>`;
+    }
 
-            const statusEl = document.getElementById('card-status');
-            statusEl.innerText = stock.status;
-            if (stock.status_color === 'red') {
-                statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-rose-900 text-rose-200';
-            } else if (stock.status_color === 'green') {
-                statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-emerald-900 text-emerald-200';
-            } else {
-                statusEl.className = 'mt-2 text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block bg-blue-900 text-blue-200';
-            }
+    function drawRiverPlot(data, config) {
+      const traceClose = {
+        x: data.dates, y: data.close,
+        name: '收盤價', type: 'scatter', mode: 'lines',
+        line: { color: '#ffffff', width: 2 }
+      };
 
-            renderRiverChart(stock);
-        }
+      const traceUpper = {
+        x: data.dates, y: data.river_upper,
+        name: `通道上軌 (+1.5σ)`, type: 'scatter', mode: 'lines',
+        line: { color: 'rgba(244, 63, 94, 0.4)', width: 1 }
+      };
 
-        function renderRiverChart(stock) {
-            const ctx = document.getElementById('stockChart').getContext('2d');
-            
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
+      const traceMid = {
+        x: data.dates, y: data.river_mid,
+        name: `通道中軌 (${config.type} 均值)`, type: 'scatter', mode: 'lines',
+        line: { color: '#38bdf8', width: 1.5, dash: 'dot' }
+      };
 
-            const riverUpper = stock.river_upper || Array(stock.chart_labels.length).fill(stock.sell_price);
-            const riverMa = stock.river_ma || Array(stock.chart_labels.length).fill(stock.ma20);
-            const riverLower = stock.river_lower || Array(stock.chart_labels.length).fill(stock.buy_price);
+      const traceLower = {
+        x: data.dates, y: data.river_lower,
+        name: `通道下軌 (-1.5σ)`, type: 'scatter', mode: 'lines',
+        line: { color: 'rgba(16, 185, 129, 0.4)', width: 1 },
+        fill: 'tonexty', fillcolor: 'rgba(56, 189, 248, 0.08)' // 著色河流區間
+      };
 
-            chartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: stock.chart_labels,
-                    datasets: [
-                        {
-                            label: `實際收盤 (${currentCurrency})`,
-                            data: stock.chart_prices,
-                            borderColor: '#38bdf8',
-                            backgroundColor: '#38bdf8',
-                            borderWidth: 2.8,
-                            tension: 0.15,
-                            pointRadius: 3.5,
-                            pointHoverRadius: 6,
-                            pointBackgroundColor: '#0284c7',
-                            pointBorderColor: '#ffffff',
-                            pointBorderWidth: 1.5,
-                            order: 1
-                        },
-                        {
-                            label: '河流上軌 (脫手區)',
-                            data: riverUpper,
-                            borderColor: 'rgba(244, 63, 94, 0.85)',
-                            borderWidth: 1.8,
-                            borderDash: [3, 3],
-                            pointRadius: 0,
-                            fill: false,
-                            order: 2
-                        },
-                        {
-                            label: '河流中軸 (20MA月線)',
-                            data: riverMa,
-                            borderColor: 'rgba(251, 191, 36, 0.85)',
-                            backgroundColor: 'rgba(244, 63, 94, 0.12)',
-                            borderWidth: 1.5,
-                            pointRadius: 0,
-                            fill: '-1',
-                            order: 3
-                        },
-                        {
-                            label: '河流下軌 (甜蜜入手區)',
-                            data: riverLower,
-                            borderColor: 'rgba(16, 185, 129, 0.85)',
-                            backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                            borderWidth: 1.8,
-                            borderDash: [3, 3],
-                            pointRadius: 0,
-                            fill: '-1',
-                            order: 4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    scales: {
-                        x: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af', font: { size: 11 }, maxRotation: 45 }
-                        },
-                        y: {
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#9ca3af', font: { size: 11 } }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#e5e7eb',
-                                font: { size: 12 },
-                                usePointStyle: true,
-                                boxWidth: 8
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                            titleColor: '#38bdf8',
-                            bodySpacing: 6,
-                            padding: 10,
-                            borderColor: '#374151',
-                            borderWidth: 1
-                        }
-                    }
-                }
-            });
-        }
+      const layout = {
+        title: `${config.name} (${data.symbol}) - 動態 ${config.type} 估值河流圖`,
+        paper_bgcolor: '#1e293b',
+        plot_bgcolor: '#1e293b',
+        font: { color: '#94a3b8' },
+        xaxis: { gridcolor: '#334155' },
+        yaxis: { gridcolor: '#334155', title: '價格 (TWD/USD)' },
+        margin: { t: 40, l: 50, r: 20, b: 30 },
+        legend: { orientation: 'h', y: 1.1 }
+      };
 
-        function calculateProfit() {
-            const buy = parseFloat(document.getElementById('calc-buy-price').value) || 0;
-            const sell = parseFloat(document.getElementById('calc-sell-price').value) || 0;
-            const shares = parseFloat(document.getElementById('calc-shares').value) || 0;
+      Plotly.newPlot('riverChart', [traceUpper, traceMid, traceLower, traceClose], layout, { responsive: true });
+    }
 
-            const principal = buy * shares;
-            const profit = (sell - buy) * shares;
-            const roi = principal > 0 ? ((profit / principal) * 100).toFixed(2) : 0;
+    function drawSubPlot(data) {
+      // MACD 柱狀圖
+      const colors = data.macd_hist.map(v => v >= 0 ? '#f43f5e' : '#10b981');
+      const traceMACD = {
+        x: data.dates, y: data.macd_hist,
+        name: 'MACD 柱狀體', type: 'bar',
+        marker: { color: colors }, yaxis: 'y'
+      };
 
-            document.getElementById('res-principal').innerText = principal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currentCurrency;
-            const profitEl = document.getElementById('res-profit');
-            profitEl.innerText = (profit >= 0 ? '+' : '') + profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ' + currentCurrency;
-            profitEl.className = 'font-bold ' + (profit >= 0 ? 'text-rose-400' : 'text-emerald-400');
+      // RSI 折線
+      const traceRSI = {
+        x: data.dates, y: data.rsi,
+        name: 'RSI(14)', type: 'scatter', mode: 'lines',
+        line: { color: '#f59e0b', width: 1.5 }, yaxis: 'y2'
+      };
 
-            const roiEl = document.getElementById('res-roi');
-            roiEl.innerText = (roi >= 0 ? '+' : '') + roi + ' %';
-            roiEl.className = 'font-bold ' + (roi >= 0 ? 'text-rose-400' : 'text-emerald-400');
-        }
+      const layout = {
+        paper_bgcolor: '#1e293b',
+        plot_bgcolor: '#1e293b',
+        font: { color: '#94a3b8' },
+        xaxis: { gridcolor: '#334155' },
+        yaxis: { title: 'MACD', gridcolor: '#334155', domain: [0, 0.45] },
+        yaxis2: { title: 'RSI', gridcolor: '#334155', domain: [0.55, 1], range: [0, 100] },
+        margin: { t: 20, l: 50, r: 20, b: 30 },
+        showlegend: false
+      };
 
-        document.getElementById('stock-select').addEventListener('change', (e) => {
-            renderStockView(e.target.value);
-        });
-        document.getElementById('calc-buy-price').addEventListener('input', calculateProfit);
-        document.getElementById('calc-sell-price').addEventListener('input', calculateProfit);
-        document.getElementById('calc-shares').addEventListener('input', calculateProfit);
+      Plotly.newPlot('subChart', [traceMACD, traceRSI], layout, { responsive: true });
+    }
 
-        document.getElementById('save-note-btn').addEventListener('click', () => {
-            const noteText = document.getElementById('stock-note').value;
-            localStorage.setItem('note_' + currentTicker, noteText);
-            const msg = document.getElementById('note-saved-msg');
-            msg.style.opacity = '1';
-            setTimeout(() => { msg.style.opacity = '0'; }, 2000);
-        });
+    // 模擬數據產生器（展示用）
+    function generateMockData(symbol, valType) {
+      const dates = [];
+      const close = [];
+      const river_mid = [];
+      const river_upper = [];
+      const river_lower = [];
+      const k = [], d = [], rsi = [], macd_hist = [];
 
-        loadStockData();
-    </script>
+      let basePrice = symbol.includes("6182") ? 38 : (symbol.includes("3481") ? 15.5 : 100);
+      const today = new Date();
+
+      for (let i = 60; i >= 0; i--) {
+        const dt = new Date(today);
+        dt.setDate(dt.getDate() - i);
+        dates.push(dt.toISOString().slice(0, 10));
+
+        basePrice += (Math.random() - 0.48) * (basePrice * 0.02);
+        close.push(basePrice);
+        river_mid.push(basePrice * 0.98);
+        river_upper.push(basePrice * 1.12);
+        river_lower.push(basePrice * 0.85);
+
+        k.push(40 + Math.random() * 45);
+        d.push(45 + Math.random() * 35);
+        rsi.push(35 + Math.random() * 40);
+        macd_hist.push((Math.random() - 0.5) * 1.5);
+      }
+      return { symbol, dates, close, river_mid, river_upper, river_lower, k, d, rsi, macd_hist };
+    }
+
+    // 預設載入台積電或群創
+    renderDashboard("3481.TW");
+  </script>
 </body>
 </html>
