@@ -68,10 +68,60 @@
       cursor: pointer;
     }
 
+    /* 買賣價格建議專用橫幅 */
+    .trade-price-banner {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .price-card {
+      background: var(--bg-card);
+      padding: 16px 20px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .price-card.buy {
+      border-left: 4px solid var(--accent-bear);
+    }
+
+    .price-card.sell {
+      border-left: 4px solid var(--accent-bull);
+    }
+
+    .price-card.current {
+      border-left: 4px solid var(--accent-blue);
+    }
+
+    .price-card-title {
+      font-size: 0.825rem;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .price-card-val {
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .price-card-desc {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+
     /* 三大動能法則診斷卡片列 */
     .strategy-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 14px;
       margin-bottom: 20px;
     }
@@ -127,8 +177,8 @@
   <!-- 控制列與個股選單 (19 檔) -->
   <div class="header-panel">
     <div class="header-title">
-      <h1>小布儀表板儀表板1005</h1>
-      <span>核心準則：KD 鈍化不急拋接 | RSI 50 分界做多 | MACD 柱狀體先知先覺</span>
+      <h1>小布監控儀表板</h1>
+      <span>核心準則：建議買賣價位指引 | KD 鈍化不急拋接 | RSI 50 做多 | MACD 柱體領先</span>
     </div>
     <div>
       <select id="stockSelect" onchange="renderDashboard(this.value)">
@@ -158,6 +208,36 @@
           <option value="6182.TWO">6182 合晶 (PE 矽晶圓)</option>
         </optgroup>
       </select>
+    </div>
+  </div>
+
+  <!-- 💡 買入/賣出建議價格專用卡片 -->
+  <div class="trade-price-banner">
+    <div class="price-card current">
+      <div class="price-card-title">
+        <span>最新參考收盤價</span>
+        <span id="priceCurrency">TWD</span>
+      </div>
+      <div class="price-card-val" id="valCurrentPrice" style="color: var(--accent-blue);">--</div>
+      <div class="price-card-desc" id="descCurrentRiver">當前河流通道位置計算中...</div>
+    </div>
+
+    <div class="price-card buy">
+      <div class="price-card-title">
+        <span>💡 建議買入參考價（下軌防守）</span>
+        <span style="color: var(--accent-bear);">超跌價值區</span>
+      </div>
+      <div class="price-card-val" id="valBuyPrice" style="color: var(--accent-bear);">--</div>
+      <div class="price-card-desc">通道下軌 (-1.5σ) 附近，配合低檔鈍化結束或綠柱縮短時佈局</div>
+    </div>
+
+    <div class="price-card sell">
+      <div class="price-card-title">
+        <span>⚠️ 建議賣出參考價（上軌滿足）</span>
+        <span style="color: var(--accent-bull);">目標警戒區</span>
+      </div>
+      <div class="price-card-val" id="valSellPrice" style="color: var(--accent-bull);">--</div>
+      <div class="price-card-desc">通道上軌 (+1.5σ) 附近，配合紅柱縮短或轉弱時分批獲利</div>
     </div>
   </div>
 
@@ -204,7 +284,7 @@
     </div>
   </div>
 
-  <!-- 主圖：河流通道與歷史股價 -->
+  <!-- 主圖：河流通道與歷史股價 (含買賣價位水平線標註) -->
   <div class="chart-container">
     <div id="riverChart" style="height: 500px;"></div>
   </div>
@@ -217,33 +297,34 @@
   <script>
     // 19 檔標的配置資訊
     const STOCK_CONFIG = {
-      "NVDA": { name: "NVIDIA", type: "PE", market: "US" },
-      "GOOGL": { name: "Alphabet", type: "PE", market: "US" },
-      "FCX": { name: "Freeport-McMoRan", type: "PE", market: "US" },
-      "AAPL": { name: "Apple", type: "PE", market: "US" },
-      "MSFT": { name: "Microsoft", type: "PE", market: "US" },
-      "AMD": { name: "AMD", type: "PE", market: "US" },
-      "AMAT": { name: "Applied Materials", type: "PE", market: "US" },
-      "2330.TW": { name: "台積電", type: "PE", market: "TW" },
-      "2308.TW": { name: "台達電", type: "PE", market: "TW" },
-      "2317.TW": { name: "鴻海", type: "PE", market: "TW" },
-      "2454.TW": { name: "聯發科", type: "PE", market: "TW" },
-      "2382.TW": { name: "廣達", type: "PE", market: "TW" },
-      "6213.TW": { name: "聯茂", type: "PE", market: "TW" },
-      "8358.TW": { name: "金居", type: "PE", market: "TW" },
-      "2408.TW": { name: "南亞科", type: "PB", market: "TW" },
-      "6139.TW": { name: "亞翔", type: "PE", market: "TW" },
-      "2464.TW": { name: "盟立", type: "PE", market: "TW" },
-      "3481.TW": { name: "群創", type: "PB", market: "TW" },
-      "6182.TWO": { name: "合晶", type: "PE", market: "TWO" }
+      "NVDA": { name: "NVIDIA", type: "PE", market: "US", currency: "USD" },
+      "GOOGL": { name: "Alphabet", type: "PE", market: "US", currency: "USD" },
+      "FCX": { name: "Freeport-McMoRan", type: "PE", market: "US", currency: "USD" },
+      "AAPL": { name: "Apple", type: "PE", market: "US", currency: "USD" },
+      "MSFT": { name: "Microsoft", type: "PE", market: "US", currency: "USD" },
+      "AMD": { name: "AMD", type: "PE", market: "US", currency: "USD" },
+      "AMAT": { name: "Applied Materials", type: "PE", market: "US", currency: "USD" },
+      "2330.TW": { name: "台積電", type: "PE", market: "TW", currency: "TWD" },
+      "2308.TW": { name: "台達電", type: "PE", market: "TW", currency: "TWD" },
+      "2317.TW": { name: "鴻海", type: "PE", market: "TW", currency: "TWD" },
+      "2454.TW": { name: "聯發科", type: "PE", market: "TW", currency: "TWD" },
+      "2382.TW": { name: "廣達", type: "PE", market: "TW", currency: "TWD" },
+      "6213.TW": { name: "聯茂", type: "PE", market: "TW", currency: "TWD" },
+      "8358.TW": { name: "金居", type: "PE", market: "TW", currency: "TWD" },
+      "2408.TW": { name: "南亞科", type: "PB", market: "TW", currency: "TWD" },
+      "6139.TW": { name: "亞翔", type: "PE", market: "TW", currency: "TWD" },
+      "2464.TW": { name: "盟立", type: "PE", market: "TW", currency: "TWD" },
+      "3481.TW": { name: "群創", type: "PB", market: "TW", currency: "TWD" },
+      "6182.TWO": { name: "合晶", type: "PE", market: "TWO", currency: "TWD" }
     };
 
     /**
-     * 核心邏輯：載入並套用三大實戰動能法則
+     * 核心邏輯：載入並套用價格指引與三大實戰動能法則
      */
     async function renderDashboard(symbol) {
-      const config = STOCK_CONFIG[symbol] || { name: symbol, type: "PE" };
+      const config = STOCK_CONFIG[symbol] || { name: symbol, type: "PE", currency: "TWD" };
       document.getElementById("riverValType").innerText = `${config.type} 估值模型`;
+      document.getElementById("priceCurrency").innerText = config.currency;
 
       let data;
       try {
@@ -254,32 +335,46 @@
         data = generateMockData(symbol, config.type);
       }
 
-      applyThreeTradingRules(data, config);
+      // 更新買入/賣出建議價與三大動能診斷
+      updateTradePricesAndRules(data, config);
       drawRiverPlot(data, config);
       drawSubPlot(data);
     }
 
     /**
-     * 執行三大法則判定與即時診斷提示
+     * 執行價格計算、三大法則判定與即時診斷提示
      */
-    function applyThreeTradingRules(data, config) {
+    function updateTradePricesAndRules(data, config) {
       const n = data.dates.length - 1;
       const close = data.close[n];
       const upper = data.river_upper[n];
+      const mid = data.river_mid[n];
       const lower = data.river_lower[n];
 
-      // --- 0. 河流圖通道 ---
+      // 💡 建議價格更新：
+      // 建議買入：取通道下軌作為防守基準
+      // 建議賣出：取通道上軌作為滿足基準
+      document.getElementById("valCurrentPrice").innerText = close.toFixed(2);
+      document.getElementById("valBuyPrice").innerText = lower.toFixed(2);
+      document.getElementById("valSellPrice").innerText = upper.toFixed(2);
+
+      // --- 0. 河流圖通道判定 ---
       const statusRiver = document.getElementById("statusRiver");
       const hintRiver = document.getElementById("hintRiver");
+      const descCurrentRiver = document.getElementById("descCurrentRiver");
+
       if (close > upper) {
         statusRiver.innerHTML = `<span style="color:var(--accent-bull);">🔴 通道上軌 (強勢超買)</span>`;
         hintRiver.innerText = "股價突破通道上軌，多頭氣勢強勁，留意是否出現背離或乖離修正。";
+        descCurrentRiver.innerText = `高於上軌 ${(close - upper).toFixed(2)}，處於超買滿足警戒區`;
       } else if (close < lower) {
         statusRiver.innerHTML = `<span style="color:var(--accent-bear);">🟢 通道下軌 (價值超跌)</span>`;
         hintRiver.innerText = "股價落入統計超跌低估區，長線價值浮現，等待技術動能轉強。";
+        descCurrentRiver.innerText = `低於下軌 ${(lower - close).toFixed(2)}，落入超跌價值買進區`;
       } else {
         statusRiver.innerHTML = `<span style="color:var(--accent-blue);">⚪ 常態通道內整理</span>`;
         hintRiver.innerText = "股價在合理估值通道內運行，依循動能趨勢順勢操作。";
+        descCurrentRiver.innerText = `介於下軌 (${lower.toFixed(2)}) 與 上軌 (${upper.toFixed(2)}) 常態區`;
       }
 
       // --- ① KD 法則：不看高低點，只看「鈍化」---
@@ -292,7 +387,6 @@
       const statusKD = document.getElementById("statusKD");
       const hintKD = document.getElementById("hintKD");
 
-      // 判定連續 3 日鈍化
       const isHighPassive = (k >= 80 && k_prev1 >= 80 && k_prev2 >= 80);
       const isLowPassive = (k <= 20 && k_prev1 <= 20 && k_prev2 <= 20);
 
@@ -377,20 +471,20 @@
     function drawRiverPlot(data, config) {
       const traceUpper = {
         x: data.dates, y: data.river_upper,
-        name: '通道上軌 (+1.5σ)', type: 'scatter', mode: 'lines',
-        line: { color: 'rgba(244, 63, 94, 0.45)', width: 1.2 }
+        name: '建議賣出 / 上軌 (+1.5σ)', type: 'scatter', mode: 'lines',
+        line: { color: 'rgba(244, 63, 94, 0.65)', width: 1.5 }
       };
 
       const traceMid = {
         x: data.dates, y: data.river_mid,
-        name: `通道中軌 (${config.type} 滾動均值)`, type: 'scatter', mode: 'lines',
+        name: `通道中軌 (${config.type} 均值)`, type: 'scatter', mode: 'lines',
         line: { color: '#38bdf8', width: 1.5, dash: 'dash' }
       };
 
       const traceLower = {
         x: data.dates, y: data.river_lower,
-        name: '通道下軌 (-1.5σ)', type: 'scatter', mode: 'lines',
-        line: { color: 'rgba(16, 185, 129, 0.45)', width: 1.2 },
+        name: '建議買入 / 下軌 (-1.5σ)', type: 'scatter', mode: 'lines',
+        line: { color: 'rgba(16, 185, 129, 0.65)', width: 1.5 },
         fill: 'tonexty', fillcolor: 'rgba(56, 189, 248, 0.08)'
       };
 
@@ -403,15 +497,15 @@
 
       const layout = {
         title: {
-          text: `${config.name} (${data.symbol}) - 動態 ${config.type} 估值河流圖`,
+          text: `${config.name} (${data.symbol}) - 動態 ${config.type} 估值河流圖與買賣價位`,
           font: { color: '#f8fafc', size: 16 }
         },
         paper_bgcolor: '#1e293b',
         plot_bgcolor: '#1e293b',
         font: { color: '#94a3b8' },
         xaxis: { gridcolor: '#334155' },
-        yaxis: { gridcolor: '#334155', title: '價格' },
-        margin: { t: 45, l: 50, r: 25, b: 35 },
+        yaxis: { gridcolor: '#334155', title: `價格 (${config.currency})` },
+        margin: { t: 45, l: 55, r: 25, b: 35 },
         legend: { orientation: 'h', y: 1.1, x: 0 }
       };
 
@@ -422,13 +516,12 @@
      * 繪製附圖：MACD 柱狀體與 RSI 50 多空線
      */
     function drawSubPlot(data) {
-      // MACD 柱狀體顏色 (紅漲綠跌)
       const barColors = data.macd_hist.map((v, i) => {
         const prev = data.macd_hist[i - 1] || v;
         if (v >= 0) {
-          return v >= prev ? '#f43f5e' : '#fda4af'; // 放大亮紅，縮短暗紅
+          return v >= prev ? '#f43f5e' : '#fda4af';
         } else {
-          return v >= prev ? '#6ee7b7' : '#10b981'; // 縮短亮綠，放大深綠
+          return v >= prev ? '#6ee7b7' : '#10b981';
         }
       });
 
@@ -438,7 +531,6 @@
         marker: { color: barColors }, yaxis: 'y'
       };
 
-      // RSI 折線
       const traceRSI = {
         x: data.dates, y: data.rsi,
         name: 'RSI(14)', type: 'scatter', mode: 'lines',
@@ -459,7 +551,6 @@
           domain: [0.55, 1], range: [0, 100]
         },
         shapes: [
-          // RSI = 50 多空分界基準線 (關鍵視覺指引)
           {
             type: 'line',
             xref: 'paper', x0: 0, x1: 1,
@@ -467,7 +558,7 @@
             line: { color: '#e2e8f0', width: 1.5, dash: 'dash' }
           }
         ],
-        margin: { t: 20, l: 50, r: 25, b: 25 },
+        margin: { t: 20, l: 55, r: 25, b: 25 },
         showlegend: false
       };
 
