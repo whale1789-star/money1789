@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>小布決策儀表板</title>
+  <title>小布儀表板</title>
   <!-- 引入 Plotly.js 圖表庫 -->
   <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
   <style>
@@ -16,6 +16,7 @@
       --accent-bull: #f43f5e;
       --accent-bear: #10b981;
       --accent-blue: #38bdf8;
+      --accent-warn: #f59e0b;
     }
 
     * {
@@ -25,45 +26,33 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       margin: 0;
-      padding: 24px;
+      padding: 20px;
       background-color: var(--bg-main);
       color: var(--text-main);
     }
 
-    /* 頂部選單列 */
+    /* 頂部導航與標的選單 */
     .header-panel {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
-      margin-bottom: 24px;
-      padding: 18px 24px;
+      margin-bottom: 20px;
+      padding: 16px 20px;
       background: var(--bg-card);
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid var(--border-color);
     }
 
     .header-title h1 {
-      margin: 0 0 6px 0;
-      font-size: 1.5rem;
+      margin: 0 0 4px 0;
+      font-size: 1.4rem;
       font-weight: 700;
-      letter-spacing: -0.025em;
     }
 
     .header-title span {
-      font-size: 0.875rem;
-      color: var(--text-sub);
-    }
-
-    .select-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .select-wrapper label {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--text-sub);
     }
 
@@ -71,73 +60,78 @@
       background: var(--bg-main);
       color: var(--accent-blue);
       border: 1px solid #475569;
-      padding: 9px 16px;
+      padding: 8px 16px;
       border-radius: 6px;
       font-size: 0.95rem;
       font-weight: 600;
       outline: none;
       cursor: pointer;
-      transition: border-color 0.2s;
     }
 
-    select:hover, select:focus {
-      border-color: var(--accent-blue);
-    }
-
-    /* 核心診斷指標卡片列 */
-    .metrics-bar {
+    /* 三大動能法則診斷卡片列 */
+    .strategy-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
     }
 
-    .metric-card {
+    .strategy-card {
       background: var(--bg-card);
-      padding: 16px 20px;
-      border-radius: 10px;
+      padding: 14px 18px;
+      border-radius: 8px;
       border: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: space-between;
     }
 
-    .metric-title {
-      font-size: 0.825rem;
+    .card-label {
+      font-size: 0.8rem;
       color: var(--text-sub);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 6px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
     }
 
-    .metric-val {
-      font-size: 1.35rem;
+    .card-status {
+      font-size: 1.15rem;
       font-weight: 700;
-      letter-spacing: -0.01em;
+      margin: 4px 0;
+    }
+
+    .card-hint {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      line-height: 1.35;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 6px 10px;
+      border-radius: 4px;
+      margin-top: 6px;
+      border-left: 3px solid #64748b;
     }
 
     /* 圖表容器 */
     .chart-container {
       background: var(--bg-card);
-      border-radius: 10px;
+      border-radius: 8px;
       border: 1px solid var(--border-color);
-      padding: 16px;
-      margin-bottom: 24px;
-      position: relative;
+      padding: 14px;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 <body>
 
-  <!-- 控制列與個股選單 (共計 19 檔) -->
+  <!-- 控制列與個股選單 (19 檔) -->
   <div class="header-panel">
     <div class="header-title">
-      <h1>小布決策儀表板</h1>
-      <span>監控標的：19 檔</span>
+      <h1>小布儀表板儀表板1005</h1>
+      <span>核心準則：KD 鈍化不急拋接 | RSI 50 分界做多 | MACD 柱狀體先知先覺</span>
     </div>
-    <div class="select-wrapper">
-      <label for="stockSelect">切換監控標的：</label>
-      <select id="stockSelect" onchange="switchStock(this.value)">
+    <div>
+      <select id="stockSelect" onchange="renderDashboard(this.value)">
         <optgroup label="美股科技 / AI 權值">
           <option value="NVDA">NVDA - NVIDIA (PE)</option>
           <option value="GOOGL">GOOGL - Alphabet (PE)</option>
@@ -158,45 +152,66 @@
           <option value="2408.TW">2408 南亞科 (PB)</option>
           <option value="6139.TW">6139 亞翔 (PE)</option>
           <option value="2464.TW">2464 盟立 (PE)</option>
-          <!-- 新增上市標的 -->
           <option value="3481.TW">3481 群創 (PB 面板/FOPLP)</option>
         </optgroup>
         <optgroup label="台股櫃買市場 (.TWO)">
-          <!-- 新增上櫃標的 -->
           <option value="6182.TWO">6182 合晶 (PE 矽晶圓)</option>
         </optgroup>
       </select>
     </div>
   </div>
 
-  <!-- 即時狀態卡片列 -->
-  <div class="metrics-bar">
-    <div class="metric-card">
-      <div class="metric-title">河流通道狀態</div>
-      <div class="metric-val" id="statusRiver">--</div>
+  <!-- 三大判斷法則與河流通道即時診斷 -->
+  <div class="strategy-grid">
+    <!-- 河流通道估值診斷 -->
+    <div class="strategy-card">
+      <div class="card-label">
+        <span>河流通道位置</span>
+        <span id="riverValType">--</span>
+      </div>
+      <div class="card-status" id="statusRiver">--</div>
+      <div class="card-hint" id="hintRiver">通道中軌為歷史估值均線，上下軌為 ±1.5σ 統計常態通道。</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">KD(9,3) 鈍化狀態</div>
-      <div class="metric-val" id="statusKD">--</div>
+
+    <!-- 法則 ①：KD 只看鈍化 -->
+    <div class="strategy-card">
+      <div class="card-label">
+        <span>① KD (9,3) 鈍化法則</span>
+        <span id="kdNumeric">K: -- / D: --</span>
+      </div>
+      <div class="card-status" id="statusKD">--</div>
+      <div class="card-hint" id="hintKD">高檔鈍化不急賣，低檔鈍化不急接。等真正轉折再行操作。</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">RSI(14) 強弱度 (50多空)</div>
-      <div class="metric-val" id="statusRSI">--</div>
+
+    <!-- 法則 ②：RSI 50 分水嶺 -->
+    <div class="strategy-card">
+      <div class="card-label">
+        <span>② RSI (14) 多空分界</span>
+        <span id="rsiNumeric">RSI: --</span>
+      </div>
+      <div class="card-status" id="statusRSI">--</div>
+      <div class="card-hint" id="hintRSI">50 以上才做多，50 以下不躁進。過 70 與強勢並存，不隨便摸頭。</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">MACD 柱狀體動能</div>
-      <div class="metric-val" id="statusMACD">--</div>
+
+    <!-- 法則 ③：MACD 柱狀體先知 -->
+    <div class="strategy-card">
+      <div class="card-label">
+        <span>③ MACD 柱狀體動能</span>
+        <span id="macdNumeric">柱狀值: --</span>
+      </div>
+      <div class="card-status" id="statusMACD">--</div>
+      <div class="card-hint" id="hintMACD">盯柱狀體縮放判定連續動能，不必被動苦等滯後的黃金/死亡交叉。</div>
     </div>
   </div>
 
-  <!-- 主圖：河流通道與股價 -->
+  <!-- 主圖：河流通道與歷史股價 -->
   <div class="chart-container">
-    <div id="riverChart" style="height: 520px;"></div>
+    <div id="riverChart" style="height: 500px;"></div>
   </div>
 
-  <!-- 附圖：MACD 柱狀體與 RSI 震盪線 -->
+  <!-- 附圖：MACD 柱狀體與 RSI 震盪線 (含 50 分水線) -->
   <div class="chart-container">
-    <div id="subChart" style="height: 320px;"></div>
+    <div id="subChart" style="height: 330px;"></div>
   </div>
 
   <script>
@@ -204,7 +219,7 @@
     const STOCK_CONFIG = {
       "NVDA": { name: "NVIDIA", type: "PE", market: "US" },
       "GOOGL": { name: "Alphabet", type: "PE", market: "US" },
-      "FCX": { name: "自由港麥克墨倫", type: "PE", market: "US" },
+      "FCX": { name: "Freeport-McMoRan", type: "PE", market: "US" },
       "AAPL": { name: "Apple", type: "PE", market: "US" },
       "MSFT": { name: "Microsoft", type: "PE", market: "US" },
       "AMD": { name: "AMD", type: "PE", market: "US" },
@@ -219,83 +234,147 @@
       "2408.TW": { name: "南亞科", type: "PB", market: "TW" },
       "6139.TW": { name: "亞翔", type: "PE", market: "TW" },
       "2464.TW": { name: "盟立", type: "PE", market: "TW" },
-      // 新增標的
-      "6182.TWO": { name: "合晶", type: "PE", market: "TWO" },
-      "3481.TW": { name: "群創", type: "PB", market: "TW" }
+      "3481.TW": { name: "群創", type: "PB", market: "TW" },
+      "6182.TWO": { name: "合晶", type: "PE", market: "TWO" }
     };
 
     /**
-     * 切換股票觸發流程
+     * 核心邏輯：載入並套用三大實戰動能法則
      */
-    async function switchStock(symbol) {
+    async function renderDashboard(symbol) {
       const config = STOCK_CONFIG[symbol] || { name: symbol, type: "PE" };
-      let data = null;
+      document.getElementById("riverValType").innerText = `${config.type} 估值模型`;
 
+      let data;
       try {
-        // 優先讀取 GitHub Actions 產出的 data 資料夾靜態 JSON
         const res = await fetch(`./data/${symbol}.json`);
         if (!res.ok) throw new Error("無靜態檔案");
         data = await res.json();
-      } catch (e) {
-        // 備援：若無靜態檔案則自動啟動即時演算法生成數據，維持網頁可用性
-        data = generateFallbackData(symbol, config.type);
+      } catch (err) {
+        data = generateMockData(symbol, config.type);
       }
 
-      updateMetricCards(data);
-      drawRiverChart(data, config);
-      drawSubIndicatorsChart(data);
+      applyThreeTradingRules(data, config);
+      drawRiverPlot(data, config);
+      drawSubPlot(data);
     }
 
     /**
-     * 更新頂部指標卡片內容與顏色
+     * 執行三大法則判定與即時診斷提示
      */
-    function updateMetricCards(data) {
-      const last = data.dates.length - 1;
-      const close = data.close[last];
-      const upper = data.river_upper[last];
-      const lower = data.river_lower[last];
+    function applyThreeTradingRules(data, config) {
+      const n = data.dates.length - 1;
+      const close = data.close[n];
+      const upper = data.river_upper[n];
+      const lower = data.river_lower[n];
 
-      // 1. 河流通道判定
-      const riverEl = document.getElementById("statusRiver");
+      // --- 0. 河流圖通道 ---
+      const statusRiver = document.getElementById("statusRiver");
+      const hintRiver = document.getElementById("hintRiver");
       if (close > upper) {
-        riverEl.innerHTML = `<span style="color: var(--accent-bull);">🔴 強勢超買區</span>`;
+        statusRiver.innerHTML = `<span style="color:var(--accent-bull);">🔴 通道上軌 (強勢超買)</span>`;
+        hintRiver.innerText = "股價突破通道上軌，多頭氣勢強勁，留意是否出現背離或乖離修正。";
       } else if (close < lower) {
-        riverEl.innerHTML = `<span style="color: var(--accent-bear);">🟢 價值超跌區</span>`;
+        statusRiver.innerHTML = `<span style="color:var(--accent-bear);">🟢 通道下軌 (價值超跌)</span>`;
+        hintRiver.innerText = "股價落入統計超跌低估區，長線價值浮現，等待技術動能轉強。";
       } else {
-        riverEl.innerHTML = `<span style="color: var(--accent-blue);">⚪ 常態通道內</span>`;
+        statusRiver.innerHTML = `<span style="color:var(--accent-blue);">⚪ 常態通道內整理</span>`;
+        hintRiver.innerText = "股價在合理估值通道內運行，依循動能趨勢順勢操作。";
       }
 
-      // 2. KD 鈍化判定 (高檔 K>=80 連續鈍化 / 低檔 K<=20 鈍化)
-      const k = data.k[last];
-      const d = data.d[last];
-      const kdEl = document.getElementById("statusKD");
-      if (k >= 80) {
-        kdEl.innerHTML = `<span style="color: var(--accent-bull);">高檔鈍化 (${k.toFixed(1)}) 🔥</span>`;
+      // --- ① KD 法則：不看高低點，只看「鈍化」---
+      const k = data.k[n];
+      const d = data.d[n];
+      const k_prev1 = data.k[n - 1] || k;
+      const k_prev2 = data.k[n - 2] || k;
+      document.getElementById("kdNumeric").innerText = `K: ${k.toFixed(1)} / D: ${d.toFixed(1)}`;
+      
+      const statusKD = document.getElementById("statusKD");
+      const hintKD = document.getElementById("hintKD");
+
+      // 判定連續 3 日鈍化
+      const isHighPassive = (k >= 80 && k_prev1 >= 80 && k_prev2 >= 80);
+      const isLowPassive = (k <= 20 && k_prev1 <= 20 && k_prev2 <= 20);
+
+      if (isHighPassive) {
+        statusKD.innerHTML = `<span style="color:var(--accent-bull);">🔥 高檔鈍化（多方極強）</span>`;
+        hintKD.innerHTML = `<strong>【口訣：高檔鈍化不急賣】</strong> 多方動能強勢鎖定，切勿因 >80 提早出場，耐心等轉弱再說。`;
+      } else if (isLowPassive) {
+        statusKD.innerHTML = `<span style="color:var(--accent-bear);">❄️ 低檔鈍化（空方慣性）</span>`;
+        hintKD.innerHTML = `<strong>【口訣：低檔鈍化不急接】</strong> 空方賣壓主導，切勿因 <20 盲目抄底，等真正破冰翻揚再進場。`;
+      } else if (k >= 80) {
+        statusKD.innerHTML = `<span style="color:var(--accent-warn);">⚡ 進入高檔區 (${k.toFixed(1)})</span>`;
+        hintKD.innerText = "K 值進入 80 以上，觀察後續能否形成連續高檔鈍化以延續主升段。";
       } else if (k <= 20) {
-        kdEl.innerHTML = `<span style="color: var(--accent-bear);">低檔鈍化 (${k.toFixed(1)}) ❄️</span>`;
+        statusKD.innerHTML = `<span style="color:var(--accent-blue);">💧 進入低檔區 (${k.toFixed(1)})</span>`;
+        hintKD.innerText = "K 值落入 20 以下，尚未脫離弱勢，觀察是否有低檔鈍化風險。";
       } else {
-        kdEl.innerHTML = `<span style="color: var(--text-main);">K:${k.toFixed(1)} / D:${d.toFixed(1)}</span>`;
+        statusKD.innerHTML = `<span style="color:var(--text-main);">常態波動區間</span>`;
+        hintKD.innerText = "未達鈍化臨界，KD 僅供節奏參考，重點以趨勢為依歸。";
       }
 
-      // 3. RSI 多空分水嶺 (50)
-      const rsi = data.rsi[last];
-      const rsiEl = document.getElementById("statusRSI");
-      rsiEl.innerHTML = rsi >= 50
-        ? `<span style="color: var(--accent-bull);">${rsi.toFixed(1)} (多方控盤)</span>`
-        : `<span style="color: var(--accent-bear);">${rsi.toFixed(1)} (空方回檔)</span>`;
+      // --- ② RSI 法則：不看 70/30，主要看「50」---
+      const rsi = data.rsi[n];
+      const rsi_prev = data.rsi[n - 1] || rsi;
+      const isRsiUp = rsi >= rsi_prev;
+      document.getElementById("rsiNumeric").innerText = `RSI: ${rsi.toFixed(1)} (${isRsiUp ? '向上' : '向下'})`;
 
-      // 4. MACD 柱狀動能
-      const macdHist = data.macd_hist[last];
-      const macdEl = document.getElementById("statusMACD");
-      macdEl.innerHTML = macdHist >= 0
-        ? `<span style="color: var(--accent-bull);">+${macdHist.toFixed(2)} (動能增強)</span>`
-        : `<span style="color: var(--accent-bear);">${macdHist.toFixed(2)} (動能沉澱)</span>`;
+      const statusRSI = document.getElementById("statusRSI");
+      const hintRSI = document.getElementById("hintRSI");
+
+      if (rsi >= 50) {
+        if (isRsiUp) {
+          statusRSI.innerHTML = `<span style="color:var(--accent-bull);">📈 站穩 50 且走揚（多方優勢）</span>`;
+          hintRSI.innerHTML = `<strong>【50 以上才做多】</strong> 多方掌控主導權，短多格局明朗，順勢作多具保護傘。`;
+        } else {
+          statusRSI.innerHTML = `<span style="color:var(--accent-warn);">⚠️ 50 之上出現回落</span>`;
+          hintRSI.innerText = "仍處 50 多方水位，但動能微幅下彎，留意多頭防守力道。";
+        }
+        if (rsi >= 70) {
+          hintRSI.innerHTML += `<br><em>※ RSI > 70：若帶量上攻，為「強勢與高檔共存」，切勿急著摸頭砍單！</em>`;
+        }
+      } else {
+        if (!isRsiUp) {
+          statusRSI.innerHTML = `<span style="color:var(--accent-bear);">📉 跌破 50 且走低（空方主導）</span>`;
+          hintRSI.innerHTML = `<strong>【50 以下不躁進】</strong> 空方控盤氣氛濃，嚴守紀律，切忌躁進搶反彈。`;
+        } else {
+          statusRSI.innerHTML = `<span style="color:var(--accent-blue);">🔄 50 之下尋求回勾</span>`;
+          hintRSI.innerText = "空方結構內微幅反彈，尚未突破 50 多空分界線，保持保守觀察。";
+        }
+      }
+
+      // --- ③ MACD 法則：先看「柱狀體」，不等交叉訊號 ---
+      const hist = data.macd_hist[n];
+      const hist_prev = data.macd_hist[n - 1] || hist;
+      const histDiff = hist - hist_prev;
+      document.getElementById("macdNumeric").innerText = `柱體: ${hist >= 0 ? '+' : ''}${hist.toFixed(2)}`;
+
+      const statusMACD = document.getElementById("statusMACD");
+      const hintMACD = document.getElementById("hintMACD");
+
+      if (hist >= 0) {
+        if (histDiff > 0) {
+          statusMACD.innerHTML = `<span style="color:var(--accent-bull);">🚀 紅柱持續放大（動能增強）</span>`;
+          hintMACD.innerHTML = `<strong>【趨勢延續】</strong> 多方攻擊動能正持續擴大，比黃金交叉更早確認進攻訊號。`;
+        } else {
+          statusMACD.innerHTML = `<span style="color:var(--accent-warn);">⚠️ 紅柱開始縮短（動能轉弱）</span>`;
+          hintMACD.innerHTML = `<strong>【先知先覺】</strong> 雖然還沒死亡交叉，但攻擊動能已開始衰竭，準備注意回檔風險！`;
+        }
+      } else {
+        if (histDiff > 0) {
+          statusMACD.innerHTML = `<span style="color:var(--accent-blue);">🌱 負值朝 0 靠攏（空方收斂）</span>`;
+          hintMACD.innerHTML = `<strong>【提早警示】</strong> 綠柱持續縮短，空方壓迫減輕，正醞釀翻轉契機，比等交叉快好幾天！`;
+        } else {
+          statusMACD.innerHTML = `<span style="color:var(--accent-bear);">💥 綠柱持續擴大（空方賣壓）</span>`;
+          hintMACD.innerHTML = `空方殺盤動能尚未緩解，向下慣性仍在延續。`;
+        }
+      }
     }
 
     /**
-     * 繪製主圖：動態河流通道
+     * 繪製河流圖主圖
      */
-    function drawRiverChart(data, config) {
+    function drawRiverPlot(data, config) {
       const traceUpper = {
         x: data.dates, y: data.river_upper,
         name: '通道上軌 (+1.5σ)', type: 'scatter', mode: 'lines',
@@ -330,9 +409,9 @@
         paper_bgcolor: '#1e293b',
         plot_bgcolor: '#1e293b',
         font: { color: '#94a3b8' },
-        xaxis: { gridcolor: '#334155', tickcolor: '#334155' },
-        yaxis: { gridcolor: '#334155', tickcolor: '#334155', title: '股價 (TWD/USD)' },
-        margin: { t: 50, l: 60, r: 30, b: 40 },
+        xaxis: { gridcolor: '#334155' },
+        yaxis: { gridcolor: '#334155', title: '價格' },
+        margin: { t: 45, l: 50, r: 25, b: 35 },
         legend: { orientation: 'h', y: 1.1, x: 0 }
       };
 
@@ -340,17 +419,26 @@
     }
 
     /**
-     * 繪製附圖：MACD 柱狀體與 RSI 震盪線
+     * 繪製附圖：MACD 柱狀體與 RSI 50 多空線
      */
-    function drawSubIndicatorsChart(data) {
-      const barColors = data.macd_hist.map(v => v >= 0 ? '#f43f5e' : '#10b981');
-      
+    function drawSubPlot(data) {
+      // MACD 柱狀體顏色 (紅漲綠跌)
+      const barColors = data.macd_hist.map((v, i) => {
+        const prev = data.macd_hist[i - 1] || v;
+        if (v >= 0) {
+          return v >= prev ? '#f43f5e' : '#fda4af'; // 放大亮紅，縮短暗紅
+        } else {
+          return v >= prev ? '#6ee7b7' : '#10b981'; // 縮短亮綠，放大深綠
+        }
+      });
+
       const traceMACD = {
         x: data.dates, y: data.macd_hist,
         name: 'MACD 柱狀體', type: 'bar',
         marker: { color: barColors }, yaxis: 'y'
       };
 
+      // RSI 折線
       const traceRSI = {
         x: data.dates, y: data.rsi,
         name: 'RSI(14)', type: 'scatter', mode: 'lines',
@@ -363,14 +451,23 @@
         font: { color: '#94a3b8' },
         xaxis: { gridcolor: '#334155' },
         yaxis: {
-          title: 'MACD', gridcolor: '#334155',
+          title: 'MACD 柱體', gridcolor: '#334155',
           domain: [0, 0.45]
         },
         yaxis2: {
-          title: 'RSI', gridcolor: '#334155',
+          title: 'RSI (50分界)', gridcolor: '#334155',
           domain: [0.55, 1], range: [0, 100]
         },
-        margin: { t: 20, l: 60, r: 30, b: 30 },
+        shapes: [
+          // RSI = 50 多空分界基準線 (關鍵視覺指引)
+          {
+            type: 'line',
+            xref: 'paper', x0: 0, x1: 1,
+            yref: 'y2', y0: 50, y1: 50,
+            line: { color: '#e2e8f0', width: 1.5, dash: 'dash' }
+          }
+        ],
+        margin: { t: 20, l: 50, r: 25, b: 25 },
         showlegend: false
       };
 
@@ -378,9 +475,9 @@
     }
 
     /**
-     * 備援資料生成器（在本地開發或靜態 JSON 尚未抓取時展示用）
+     * 模擬資料生成器（本地測試或尚未產出 JSON 時備援）
      */
-    function generateFallbackData(symbol, valType) {
+    function generateMockData(symbol, valType) {
       const dates = [];
       const close = [];
       const river_mid = [];
@@ -388,12 +485,9 @@
       const river_lower = [];
       const k = [], d = [], rsi = [], macd_hist = [];
 
-      let base = 100;
-      if (symbol.includes("6182")) base = 37.5;   // 合晶基準
-      else if (symbol.includes("3481")) base = 15.8; // 群創基準
-      else if (symbol.includes("2330")) base = 980;
-
+      let base = symbol.includes("6182") ? 37.8 : (symbol.includes("3481") ? 15.6 : 980);
       const now = new Date();
+
       for (let i = 80; i >= 0; i--) {
         const dt = new Date(now);
         dt.setDate(dt.getDate() - i);
@@ -405,17 +499,17 @@
         river_upper.push(parseFloat((base * 1.12).toFixed(2)));
         river_lower.push(parseFloat((base * 0.86).toFixed(2)));
 
-        k.push(30 + Math.random() * 55);
-        d.push(35 + Math.random() * 45);
-        rsi.push(30 + Math.random() * 50);
-        macd_hist.push((Math.random() - 0.48) * 2.0);
+        k.push(35 + Math.random() * 50);
+        d.push(40 + Math.random() * 40);
+        rsi.push(30 + Math.random() * 45);
+        macd_hist.push((Math.random() - 0.48) * 2.2);
       }
       return { symbol, dates, close, river_mid, river_upper, river_lower, k, d, rsi, macd_hist };
     }
 
-    // 頁面初次載入，預設呈現合晶或台積電
+    // 預設載入合晶 (6182.TWO)
     window.addEventListener('DOMContentLoaded', () => {
-      switchStock("6182.TWO");
+      renderDashboard("6182.TWO");
     });
   </script>
 </body>
