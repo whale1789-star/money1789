@@ -38,11 +38,11 @@
 
         <!-- 頂部主卡片 -->
         <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-700">
-            <!-- 標題與選單列（加入手動更新按鈕） -->
+            <!-- 標題與選單列（手動觸發與監聽按鈕） -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-700 pb-6 mb-6">
                 <div>
                     <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">
-                        小布決策儀表板板
+                        小布決策儀表板
                     </h1>
                     <div class="flex items-center gap-2 mt-1">
                         <p id="updated-time" class="text-xs text-gray-400">更新時間：載入中...</p>
@@ -83,7 +83,7 @@
                         </select>
                     </div>
 
-                    <!-- 💡 手動更新股價資料按鈕 -->
+                    <!-- 💡 手動遠端觸發更新按鈕 -->
                     <button id="refresh-data-btn" class="flex items-center gap-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold py-2 px-3.5 rounded-lg text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
                         <span id="refresh-icon" class="inline-block transition-transform">🔄</span>
                         <span id="refresh-text">手動更新股價</span>
@@ -268,6 +268,16 @@
     </div>
 
     <script>
+        // ========================================================
+        // ⚙️ GitHub 倉庫設定 (請確保與您 GitHub 倉庫完全一致)
+        // ========================================================
+        const GITHUB_CONFIG = {
+            owner: "YOUR_GITHUB_USERNAME",      // 例如: "hch-tw" 或您的帳號
+            repo: "YOUR_REPO_NAME",             // 例如: "stock-dashboard"
+            workflowFile: "update_data.yml",    // 您的 YAML 檔案名稱 (位於 .github/workflows/)
+            ref: "main"                         // 預設分支 (main 或 master)
+        };
+
         let chartInstance = null;
         let stockDatabase = {};
         let currentTicker = '2330.TW';
@@ -275,23 +285,10 @@
 
         /**
          * 讀取 stock_data.json
-         * @param {boolean} isManualTrigger 是否為使用者手動點擊
          */
-        async function loadStockData(isManualTrigger = false) {
-            const refreshBtn = document.getElementById('refresh-data-btn');
-            const refreshIcon = document.getElementById('refresh-icon');
-            const refreshText = document.getElementById('refresh-text');
-            const syncStatus = document.getElementById('sync-status');
-
-            if (isManualTrigger) {
-                refreshBtn.disabled = true;
-                refreshIcon.classList.add('spin-icon');
-                refreshText.innerText = '讀取最新數據中...';
-                syncStatus.innerText = '• 正在向伺服器請求...';
-            }
-
+        async function loadStockData() {
             try {
-                // 採用精確到毫秒的時間戳記與 no-cache 設定，徹底消除 GitHub Pages 或 CDN 快取
+                // 精確到毫秒的時間戳記與 no-cache，徹底消除快取
                 const timestamp = new Date().getTime();
                 const res = await fetch(`stock_data.json?t=${timestamp}`, {
                     cache: 'no-store',
@@ -308,26 +305,168 @@
 
                 const select = document.getElementById('stock-select');
                 renderStockView(select.value);
-
-                if (isManualTrigger) {
-                    syncStatus.innerText = '• 資料已同步更新！';
-                    setTimeout(() => { syncStatus.innerText = ''; }, 3000);
-                }
             } catch (err) {
                 console.warn('等待伺服器資料生成中...', err);
                 document.getElementById('updated-time').innerText = '伺服器檔案讀取異常，請稍候重試';
-                if (isManualTrigger) {
-                    syncStatus.innerText = '• 更新失敗，請檢查網路';
-                }
-            } finally {
-                if (isManualTrigger) {
-                    setTimeout(() => {
-                        refreshBtn.disabled = false;
-                        refreshIcon.classList.remove('spin-icon');
-                        refreshText.innerText = '手動更新股價';
-                    }, 500);
-                }
             }
+        }
+
+        /**
+         * 遠端呼叫 GitHub REST API 觸發 Workflow 並啟動精準輪詢
+         */
+        async function triggerAndPollWorkflow() {
+            let token = localStorage.getItem('gh_pat_token');
+            if (!token) {
+                token = prompt("請輸入具備 Actions: Read and write 權限的 GitHub Token (PAT)：\n(Token 僅安全儲存於您本地瀏覽器的 LocalStorage)");
+                if (!token) return;
+                localStorage.setItem('gh_pat_token', token.trim());
+            }
+
+            const refreshBtn = document.getElementById('refresh-data-btn');
+            const refreshIcon = document.getElementById('refresh-icon');
+            const refreshText = document.getElementById('refresh-text');
+            const syncStatus = document.getElementById('sync-status');
+
+            // 1. 切換 UI 為觸發中狀態
+            refreshBtn.disabled = true;
+            refreshIcon.classList.add('spin-icon');
+            refreshText.innerText = '觸發工作流中...';
+            syncStatus.innerText = '• 正在聯絡 GitHub Actions...';
+
+            const dispatchUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/actions/workflows/${GITHUB_CONFIG.workflowFile}/dispatches`;
+            const triggerTime = new Date(Date.now() - 5000); // 寬容 5 秒容錯
+
+            try {
+                const dispatchRes = await fetch(dispatchUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/vnd.github+json',
+                        'Authorization': `Bearer ${token}`,
+                        'X-GitHub-Api-Version': '2022-11-28'
+                    },
+                    body: JSON.stringify({ ref: GITHUB_CONFIG.ref })
+                });
+
+                if (dispatchRes.status === 204) {
+                    syncStatus.innerText = '• 觸發成功！排隊啟動雲端虛擬機...';
+                    refreshText.innerText = '等待 Actions 啟動...';
+                    
+                    // 2. 啟動狀態輪詢
+                    pollWorkflowStatus(token, triggerTime);
+                } else if (dispatchRes.status === 401 || dispatchRes.status === 403) {
+                    localStorage.removeItem('gh_pat_token');
+                    alert("Token 無效或權限不足，請確認是否具備 Actions: Write 權限！");
+                    resetRefreshButtonUI();
+                } else {
+                    const err = await dispatchRes.json().catch(() => ({}));
+                    alert(`觸發失敗 (${dispatchRes.status}): ${err.message || '請確認倉庫名稱、YAML檔名與分支名稱'}`);
+                    resetRefreshButtonUI();
+                }
+            } catch (e) {
+                console.error("觸發失敗:", e);
+                alert("網路請求失敗，請檢查網路連線。");
+                resetRefreshButtonUI();
+            }
+        }
+
+        /**
+         * 輪詢監聽工作流執行狀態
+         */
+        async function pollWorkflowStatus(token, triggerTime) {
+            const refreshText = document.getElementById('refresh-text');
+            const syncStatus = document.getElementById('sync-status');
+            const runsUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/actions/workflows/${GITHUB_CONFIG.workflowFile}/runs?per_page=5`;
+
+            let runId = null;
+            let attempts = 0;
+            const maxAttempts = 50; // 最多輪詢約 200 秒
+            const startTime = Date.now();
+
+            const pollInterval = setInterval(async () => {
+                attempts++;
+                const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+
+                try {
+                    const res = await fetch(runsUrl, {
+                        headers: {
+                            'Accept': 'application/vnd.github+json',
+                            'Authorization': `Bearer ${token}`,
+                            'X-GitHub-Api-Version': '2022-11-28'
+                        }
+                    });
+
+                    if (!res.ok) throw new Error("讀取工作流列表失敗");
+                    const data = await res.json();
+                    const runs = data.workflow_runs || [];
+
+                    // 尋找在 triggerTime 之後建立的最新 Run
+                    if (!runId) {
+                        const targetRun = runs.find(r => new Date(r.created_at) >= triggerTime);
+                        if (targetRun) {
+                            runId = targetRun.id;
+                            console.log(`[Actions 監聽] 鎖定 Run ID: ${runId}`);
+                        }
+                    }
+
+                    if (runId) {
+                        const currentRun = runs.find(r => r.id === runId);
+                        if (currentRun) {
+                            const status = currentRun.status;         // "queued", "in_progress", "completed"
+                            const conclusion = currentRun.conclusion; // "success", "failure", null
+
+                            if (status === "in_progress") {
+                                syncStatus.innerText = `• 正在抓取個股行情 (${elapsedSec}s)...`;
+                                refreshText.innerText = `運算中 (${elapsedSec}s)`;
+                            } else if (status === "queued") {
+                                syncStatus.innerText = `• 雲端節點排隊中 (${elapsedSec}s)...`;
+                            } else if (status === "completed") {
+                                clearInterval(pollInterval);
+
+                                if (conclusion === "success") {
+                                    // 🟢 綠燈：成功！
+                                    syncStatus.innerText = '• 🟢 爬蟲與運算成功！同步數據中...';
+                                    refreshText.innerText = '載入數據中...';
+                                    
+                                    // 等待 1.5 秒確保 GitHub CDN 同步 Commit 的新檔案
+                                    setTimeout(async () => {
+                                        await loadStockData();
+                                        syncStatus.innerText = '• ✅ 股價資料已同步至最新！';
+                                        setTimeout(() => { syncStatus.innerText = ''; }, 4000);
+                                        resetRefreshButtonUI();
+                                    }, 1500);
+
+                                } else {
+                                    // 🔴 紅燈：失敗
+                                    syncStatus.innerText = '• ❌ GitHub Actions 執行失敗！';
+                                    alert(`GitHub Actions 執行失敗 (${conclusion})，請至 GitHub 倉庫查看 Log：\n${currentRun.html_url}`);
+                                    resetRefreshButtonUI();
+                                }
+                                return;
+                            }
+                        }
+                    }
+
+                    // 超時防呆 (超過 200 秒)
+                    if (attempts >= maxAttempts) {
+                        clearInterval(pollInterval);
+                        syncStatus.innerText = '• 監聽逾時，請手動刷新頁面確認。';
+                        resetRefreshButtonUI();
+                    }
+
+                } catch (err) {
+                    console.warn("輪詢過程暫時中斷:", err);
+                }
+            }, 4000); // 每 4 秒輪詢一次
+        }
+
+        function resetRefreshButtonUI() {
+            const refreshBtn = document.getElementById('refresh-data-btn');
+            const refreshIcon = document.getElementById('refresh-icon');
+            const refreshText = document.getElementById('refresh-text');
+
+            refreshBtn.disabled = false;
+            refreshIcon.classList.remove('spin-icon');
+            refreshText.innerText = '手動更新股價';
         }
 
         function renderOversoldList(oversoldList) {
@@ -556,20 +695,20 @@
             roiEl.className = 'font-bold ' + (roi >= 0 ? 'text-rose-400' : 'text-emerald-400');
         }
 
-        // 綁定事件監聽
+        // 綁定個股切換監聽
         document.getElementById('stock-select').addEventListener('change', (e) => {
             renderStockView(e.target.value);
         });
 
-        // 綁定手動更新按鈕
-        document.getElementById('refresh-data-btn').addEventListener('click', () => {
-            loadStockData(true);
-        });
+        // 💡 綁定手動更新按鈕（觸發 REST API + 狀態輪詢）
+        document.getElementById('refresh-data-btn').addEventListener('click', triggerAndPollWorkflow);
 
+        // 綁定試算機輸入監聽
         document.getElementById('calc-buy-price').addEventListener('input', calculateProfit);
         document.getElementById('calc-sell-price').addEventListener('input', calculateProfit);
         document.getElementById('calc-shares').addEventListener('input', calculateProfit);
 
+        // 綁定筆記儲存
         document.getElementById('save-note-btn').addEventListener('click', () => {
             const noteText = document.getElementById('stock-note').value;
             localStorage.setItem('note_' + currentTicker, noteText);
@@ -578,7 +717,7 @@
             setTimeout(() => { msg.style.opacity = '0'; }, 2000);
         });
 
-        // 初次進入頁面自動載入
+        // 頁面首次載入
         loadStockData();
     </script>
 </body>
