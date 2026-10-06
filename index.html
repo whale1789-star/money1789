@@ -8,6 +8,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .spin-icon {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-gray-100 min-h-screen p-4 md:p-8">
 
@@ -30,46 +38,56 @@
 
         <!-- 頂部主卡片 -->
         <div class="bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 border border-gray-700">
-            <!-- 標題與選單 -->
+            <!-- 標題與選單列（加入手動更新按鈕） -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-700 pb-6 mb-6">
                 <div>
                     <h1 class="text-2xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-300 to-emerald-400">
-                        小布決策儀表板
+                        小布決策儀表板板
                     </h1>
-                    <p id="updated-time" class="text-xs text-gray-400 mt-1">更新時間：載入中...</p>
+                    <div class="flex items-center gap-2 mt-1">
+                        <p id="updated-time" class="text-xs text-gray-400">更新時間：載入中...</p>
+                        <span id="sync-status" class="text-[11px] text-teal-400 font-medium"></span>
+                    </div>
                 </div>
-                <div>
-                    <label for="stock-select" class="block text-xs text-gray-400 mb-1">選擇監控標的：</label>
-                    <select id="stock-select" class="bg-gray-700 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 border border-gray-600">
-                        <optgroup label="美股焦點 (US Stocks)">
-                            <option value="NVDA">輝達 (NVDA)</option>
-                            <option value="GOOGL">Alphabet (GOOGL)</option>
-                            <option value="FCX">自由港麥克莫蘭 (FCX)</option>
-                        </optgroup>
-                        <optgroup label="台股核心權值">
-                            <option value="2330.TW" selected>台積電 (2330)</option>
-                            <option value="2308.TW">台達電 (2308)</option>
-                            <option value="3008.TW">大立光 (3008)</option>
-                            <option value="2317.TW">鴻海 (2317)</option>
-                        </optgroup>
-                        <optgroup label="記憶體 / PCB / 電子零組件">
-                            <!-- 精準對齊 JSON Key：6182.TWO 與 3481.TW -->
-                            <option value="6182.TWO">合晶 (6182)</option>
-                            <option value="3481.TW">群創 (3481)</option>
-                            <option value="2408.TW">南亞科 (2408)</option>
-                            <option value="2337.TW">旺宏 (2337)</option>
-                            <option value="6770.TW">力積電 (6770)</option>
-                            <option value="8358.TWO">金居 (8358)</option>
-                            <option value="6213.TW">聯茂 (6213)</option>
-                            <option value="6290.TWO">良維 (6290)</option>
-                        </optgroup>
-                        <optgroup label="高股息 & 指數 ETF">
-                            <option value="0050.TW">元大台灣50 (0050)</option>
-                            <option value="0056.TW">元大高股息 (0056)</option>
-                            <option value="00919.TW">群益台灣精選高息 (00919)</option>
-                            <option value="00878.TW">國泰永續高股息 (00878)</option>
-                        </optgroup>
-                    </select>
+                <div class="flex flex-wrap items-end gap-3">
+                    <div>
+                        <label for="stock-select" class="block text-xs text-gray-400 mb-1">選擇監控標的：</label>
+                        <select id="stock-select" class="bg-gray-700 text-white font-medium py-2 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 border border-gray-600">
+                            <optgroup label="美股焦點 (US Stocks)">
+                                <option value="NVDA">輝達 (NVDA)</option>
+                                <option value="GOOGL">Alphabet (GOOGL)</option>
+                                <option value="FCX">自由港麥克莫蘭 (FCX)</option>
+                            </optgroup>
+                            <optgroup label="台股核心權值">
+                                <option value="2330.TW" selected>台積電 (2330)</option>
+                                <option value="2308.TW">台達電 (2308)</option>
+                                <option value="3008.TW">大立光 (3008)</option>
+                                <option value="2317.TW">鴻海 (2317)</option>
+                            </optgroup>
+                            <optgroup label="記憶體 / PCB / 電子零組件">
+                                <option value="6182.TWO">合晶 (6182)</option>
+                                <option value="3481.TW">群創 (3481)</option>
+                                <option value="2408.TW">南亞科 (2408)</option>
+                                <option value="2337.TW">旺宏 (2337)</option>
+                                <option value="6770.TW">力積電 (6770)</option>
+                                <option value="8358.TWO">金居 (8358)</option>
+                                <option value="6213.TW">聯茂 (6213)</option>
+                                <option value="6290.TWO">良維 (6290)</option>
+                            </optgroup>
+                            <optgroup label="高股息 & 指數 ETF">
+                                <option value="0050.TW">元大台灣50 (0050)</option>
+                                <option value="0056.TW">元大高股息 (0056)</option>
+                                <option value="00919.TW">群益台灣精選高息 (00919)</option>
+                                <option value="00878.TW">國泰永續高股息 (00878)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- 💡 手動更新股價資料按鈕 -->
+                    <button id="refresh-data-btn" class="flex items-center gap-1.5 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 text-white font-semibold py-2 px-3.5 rounded-lg text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span id="refresh-icon" class="inline-block transition-transform">🔄</span>
+                        <span id="refresh-text">手動更新股價</span>
+                    </button>
                 </div>
             </div>
 
@@ -255,10 +273,31 @@
         let currentTicker = '2330.TW';
         let currentCurrency = 'TWD';
 
-        async function loadStockData() {
+        /**
+         * 讀取 stock_data.json
+         * @param {boolean} isManualTrigger 是否為使用者手動點擊
+         */
+        async function loadStockData(isManualTrigger = false) {
+            const refreshBtn = document.getElementById('refresh-data-btn');
+            const refreshIcon = document.getElementById('refresh-icon');
+            const refreshText = document.getElementById('refresh-text');
+            const syncStatus = document.getElementById('sync-status');
+
+            if (isManualTrigger) {
+                refreshBtn.disabled = true;
+                refreshIcon.classList.add('spin-icon');
+                refreshText.innerText = '讀取最新數據中...';
+                syncStatus.innerText = '• 正在向伺服器請求...';
+            }
+
             try {
-                // 加上時間戳記避免瀏覽器讀取到舊快取
-                const res = await fetch('stock_data.json?t=' + new Date().getTime());
+                // 採用精確到毫秒的時間戳記與 no-cache 設定，徹底消除 GitHub Pages 或 CDN 快取
+                const timestamp = new Date().getTime();
+                const res = await fetch(`stock_data.json?t=${timestamp}`, {
+                    cache: 'no-store',
+                    headers: { 'Pragma': 'no-cache', 'Cache-Control': 'no-cache' }
+                });
+
                 if (!res.ok) throw new Error('無法讀取 stock_data.json');
                 const data = await res.json();
                 
@@ -269,9 +308,25 @@
 
                 const select = document.getElementById('stock-select');
                 renderStockView(select.value);
+
+                if (isManualTrigger) {
+                    syncStatus.innerText = '• 資料已同步更新！';
+                    setTimeout(() => { syncStatus.innerText = ''; }, 3000);
+                }
             } catch (err) {
                 console.warn('等待伺服器資料生成中...', err);
-                document.getElementById('updated-time').innerText = '等待伺服器排程生成最新數據...';
+                document.getElementById('updated-time').innerText = '伺服器檔案讀取異常，請稍候重試';
+                if (isManualTrigger) {
+                    syncStatus.innerText = '• 更新失敗，請檢查網路';
+                }
+            } finally {
+                if (isManualTrigger) {
+                    setTimeout(() => {
+                        refreshBtn.disabled = false;
+                        refreshIcon.classList.remove('spin-icon');
+                        refreshText.innerText = '手動更新股價';
+                    }, 500);
+                }
             }
         }
 
@@ -308,7 +363,6 @@
         function renderStockView(ticker) {
             currentTicker = ticker;
 
-            // 自動相容鍵值比對：無論是傳入完整代碼、純數字都能精準找到
             const pureCode = ticker.split('.')[0];
             const stock = stockDatabase[ticker] || 
                           stockDatabase[pureCode] || 
@@ -502,9 +556,16 @@
             roiEl.className = 'font-bold ' + (roi >= 0 ? 'text-rose-400' : 'text-emerald-400');
         }
 
+        // 綁定事件監聽
         document.getElementById('stock-select').addEventListener('change', (e) => {
             renderStockView(e.target.value);
         });
+
+        // 綁定手動更新按鈕
+        document.getElementById('refresh-data-btn').addEventListener('click', () => {
+            loadStockData(true);
+        });
+
         document.getElementById('calc-buy-price').addEventListener('input', calculateProfit);
         document.getElementById('calc-sell-price').addEventListener('input', calculateProfit);
         document.getElementById('calc-shares').addEventListener('input', calculateProfit);
@@ -517,6 +578,7 @@
             setTimeout(() => { msg.style.opacity = '0'; }, 2000);
         });
 
+        // 初次進入頁面自動載入
         loadStockData();
     </script>
 </body>
